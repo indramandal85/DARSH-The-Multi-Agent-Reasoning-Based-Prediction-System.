@@ -34,11 +34,19 @@
       <stop offset="0.5" stop-color="#7d73ff"/>
       <stop offset="1" stop-color="#ef7dff"/>
     </linearGradient>
-    <linearGradient id="wordAccent" x1="284" y1="62" x2="804" y2="180" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#10265c"/>
-      <stop offset="0.28" stop-color="#173e8a"/>
-      <stop offset="0.62" stop-color="#6b63ff"/>
-      <stop offset="1" stop-color="#cf74ff"/>
+    <linearGradient id="wordAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop stop-color="#253252"/>
+      <stop offset="0.26" stop-color="#356fca"/>
+      <stop offset="0.48" stop-color="#69cbff"/>
+      <stop offset="0.74" stop-color="#7f6dff"/>
+      <stop offset="1" stop-color="#b785ff"/>
+    </linearGradient>
+    <linearGradient id="wordGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop stop-color="#253252" stop-opacity="0"/>
+      <stop offset="0.34" stop-color="#69cbff" stop-opacity="0.08"/>
+      <stop offset="0.52" stop-color="#effbff" stop-opacity="0.18"/>
+      <stop offset="0.76" stop-color="#8e79ff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#b785ff" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="wordUnderline" x1="280" y1="190" x2="664" y2="190" gradientUnits="userSpaceOnUse">
       <stop stop-color="#6be0ff" stop-opacity="0.16"/>
@@ -66,9 +74,9 @@
     </radialGradient>
     <linearGradient id="sheenGradient" x1="0" y1="0" x2="130" y2="0" gradientUnits="userSpaceOnUse">
       <stop stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.06"/>
-      <stop offset="0.52" stop-color="#dff6ff" stop-opacity="0.62"/>
-      <stop offset="0.58" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="0.5" stop-color="#f6fdff" stop-opacity="0.92"/>
+      <stop offset="0.58" stop-color="#dff6ff" stop-opacity="0.18"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
     <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
@@ -143,6 +151,7 @@
   </g>
 
   <g transform="translate(270 38)">
+    <text x="0" y="84" fill="url(#wordGlow)" opacity="0.22" filter="url(#softGlow)" font-size="86" font-weight="800" letter-spacing="6" font-family="Sora, Avenir Next, Segoe UI, sans-serif">DARSH</text>
     <text x="0" y="84" fill="url(#wordAccent)" font-size="86" font-weight="800" letter-spacing="6" font-family="Sora, Avenir Next, Segoe UI, sans-serif">DARSH</text>
     <text x="3" y="124" fill="#6676a8" font-size="15" font-weight="700" letter-spacing="4.3" font-family="Sora, Avenir Next, Segoe UI, sans-serif">PRE-DECISION BEHAVIORAL INTELLIGENCE</text>
     <rect x="2" y="154" width="366" height="4" rx="2" fill="url(#wordUnderline)"/>

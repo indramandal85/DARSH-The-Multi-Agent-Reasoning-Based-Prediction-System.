@@ -1,7 +1,7 @@
 # DARSH
 
 <p align="center">
-  <img src="./frontend/public/darsh-logo.svg" alt="DARSH logo" width="180" />
+  <img src="./frontend/public/darsh-logo.svg" alt="DARSH logo" width="320" />
 </p>
 
 <p align="center">
@@ -287,7 +287,7 @@ If you run the original app with local models through Ollama, DARSH follows a lo
 ### One-time setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/neuroswarm.git
+git clone https://github.com/indramandal85/DARSH-The-Multi-Agent-Reasoning-Based-Prediction-System.git neuroswarm
 cd neuroswarm
 
 python3.10 -m venv .venv
