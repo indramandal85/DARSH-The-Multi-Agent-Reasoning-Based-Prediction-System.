@@ -1,7 +1,15 @@
 # DARSH
 
 <p align="center">
-  <img src="./frontend/public/darsh-logo.svg" alt="DARSH logo" width="320" />
+  <img src="./Images/darsh-readme-header.svg" alt="DARSH animated header" width="760" />
+</p>
+
+<p align="center">
+  <strong>Pre-Decision Behavioral Intelligence</strong>
+</p>
+
+<p align="center">
+  Understand how people, markets, and institutions are likely to move before decisions lock the future in place.
 </p>
 
 <p align="center">
