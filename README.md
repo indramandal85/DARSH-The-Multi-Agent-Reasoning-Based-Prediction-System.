@@ -34,6 +34,14 @@
   <img alt="Status" src="https://img.shields.io/badge/Status-Active%20Prototype-F07CC6?style=flat-square" />
 </p>
 
+<p align="center">
+  <a href="https://darsh-demo.indramandal85.workers.dev/"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-Try%20DARSH%20Now-7C74FF?style=for-the-badge&logo=cloudflarepages&logoColor=white" /></a>
+</p>
+
+> [!IMPORTANT]
+> Try the live DARSH demo here: **[https://darsh-demo.indramandal85.workers.dev/](https://darsh-demo.indramandal85.workers.dev/)**  
+> If you want the fastest feel for the product, start with the demo before exploring the full local-first app workflow.
+
 ---
 
 ## Overview

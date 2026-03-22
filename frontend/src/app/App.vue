@@ -1664,7 +1664,10 @@ function scrollHomeSection(id) {
   target.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function previewDemoLiveRun() {}
+function previewDemoLiveRun() {
+  if (typeof window === 'undefined') return
+  window.open('https://darsh-demo.indramandal85.workers.dev/', '_blank', 'noopener,noreferrer')
+}
 
 function enterApp() {
   showHome.value = false
