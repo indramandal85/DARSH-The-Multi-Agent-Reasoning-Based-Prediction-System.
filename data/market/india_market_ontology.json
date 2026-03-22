@@ -1,0 +1,48 @@
+{
+  "event_classes": {
+    "monetary_policy": {
+      "events": ["rbi_rate_hike", "rbi_rate_cut", "rbi_rate_hold", "rbi_crr_change", "rbi_liquidity_action"],
+      "regulators": ["RBI"],
+      "primary_impact_sectors": ["banking_private", "nbfc", "real_estate", "insurance"],
+      "data_sources": ["RBI policy statement", "Governor press conference", "Bond yield reaction"],
+      "frequency": "every_2_months"
+    },
+    "fiscal_policy": {
+      "events": ["union_budget", "interim_budget", "gst_council_decision", "capex_push"],
+      "regulators": ["Ministry of Finance", "GST Council"],
+      "primary_impact_sectors": ["infrastructure", "capital_goods", "defence", "consumption"],
+      "frequency": "annual_budget_quarterly_gst"
+    },
+    "global_shock": {
+      "events": ["oil_price_spike", "oil_price_crash", "us_fed_rate_decision", "geopolitical_supply_shock"],
+      "regulators": ["Global market / policy spillover"],
+      "primary_impact_sectors": ["energy_oil_gas", "aviation", "chemicals", "auto"],
+      "frequency": "unpredictable"
+    }
+  },
+  "sector_company_map": {
+    "banking_private": {
+      "nifty50_weight_percent": 28.5,
+      "key_companies": ["HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra Bank"],
+      "key_metric": "Net Interest Margin (NIM)",
+      "primary_risk": "rate_sensitivity_and_asset_quality"
+    },
+    "infrastructure": {
+      "nifty50_weight_percent": 6.8,
+      "key_companies": ["L&T", "Adani Ports", "IRB Infra"],
+      "key_metric": "Order book and capex visibility",
+      "primary_risk": "execution_delay_and_fiscal_miss"
+    },
+    "energy_oil_gas": {
+      "nifty50_weight_percent": 13.0,
+      "key_companies": ["Reliance Industries", "ONGC", "BPCL", "IOC"],
+      "key_metric": "Crude realization and margin trend",
+      "primary_risk": "oil_shock_and_policy_pass_through"
+    }
+  },
+  "india_calendar": {
+    "rbi_mpc_schedule_2025": ["2025-02-07", "2025-04-09", "2025-06-06", "2025-08-08", "2025-10-08", "2025-12-05"],
+    "quarterly_earnings_windows": ["Jan-Feb (Q3 FY)", "Apr-May (Q4 FY)", "Jul-Aug (Q1 FY)", "Oct-Nov (Q2 FY)"],
+    "budget_date": "February 1"
+  }
+}

@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 240" fill="none">
+  <title>DARSH logo</title>
+  <style>
+    .orbit-slow { animation: orbitSlow 22s linear infinite; transform-origin: 130px 120px; }
+    .orbit-fast { animation: orbitFast 14s linear infinite; transform-origin: 130px 120px; }
+    .pulse-core { animation: pulseCore 4.8s ease-in-out infinite; transform-origin: 130px 120px; }
+    .mesh { animation: meshBreath 6s ease-in-out infinite; transform-origin: 130px 120px; }
+    .word-sheen { animation: wordSheen 5.8s ease-in-out infinite; }
+    .signal { animation: signalFloat 5.5s ease-in-out infinite; }
+    @keyframes orbitSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes orbitFast { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    @keyframes pulseCore {
+      0%, 100% { transform: scale(1); opacity: 0.94; }
+      50% { transform: scale(1.06); opacity: 1; }
+    }
+    @keyframes meshBreath {
+      0%, 100% { transform: scale(1); opacity: 0.68; }
+      50% { transform: scale(1.035); opacity: 0.96; }
+    }
+    @keyframes wordSheen {
+      0%, 100% { opacity: 0; transform: translateX(-170px); }
+      20% { opacity: 0; }
+      42% { opacity: 0.94; }
+      60% { opacity: 0; transform: translateX(220px); }
+    }
+    @keyframes signalFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+  </style>
+  <defs>
+    <linearGradient id="orbitStroke" x1="22" y1="38" x2="228" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5ed9ff"/>
+      <stop offset="0.5" stop-color="#7d73ff"/>
+      <stop offset="1" stop-color="#ef7dff"/>
+    </linearGradient>
+    <linearGradient id="wordAccent" x1="284" y1="62" x2="804" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10265c"/>
+      <stop offset="0.28" stop-color="#173e8a"/>
+      <stop offset="0.62" stop-color="#6b63ff"/>
+      <stop offset="1" stop-color="#cf74ff"/>
+    </linearGradient>
+    <linearGradient id="wordUnderline" x1="280" y1="190" x2="664" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6be0ff" stop-opacity="0.16"/>
+      <stop offset="0.18" stop-color="#6be0ff"/>
+      <stop offset="0.52" stop-color="#8d78ff"/>
+      <stop offset="0.86" stop-color="#f08cff"/>
+      <stop offset="1" stop-color="#f08cff" stop-opacity="0.14"/>
+    </linearGradient>
+    <radialGradient id="irisFill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(130 120) rotate(90) scale(50)">
+      <stop offset="0" stop-color="#09123b"/>
+      <stop offset="0.34" stop-color="#2049b8"/>
+      <stop offset="0.64" stop-color="#4dc9ff"/>
+      <stop offset="1" stop-color="#a178ff"/>
+    </radialGradient>
+    <radialGradient id="innerHalo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(130 120) rotate(90) scale(32)">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.36" stop-color="#a6f0ff"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="iconGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(130 120) rotate(90) scale(120)">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.98"/>
+      <stop offset="0.3" stop-color="#dff4ff" stop-opacity="0.82"/>
+      <stop offset="0.7" stop-color="#8f91ff" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#f0b6ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheenGradient" x1="0" y1="0" x2="130" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="0.52" stop-color="#dff6ff" stop-opacity="0.62"/>
+      <stop offset="0.58" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="strongGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="11" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="130" cy="120" r="110" fill="url(#iconGlow)"/>
+
+  <g class="orbit-slow" filter="url(#softGlow)">
+    <ellipse cx="130" cy="120" rx="108" ry="70" stroke="url(#orbitStroke)" stroke-width="3.5" opacity="0.82"/>
+    <circle cx="130" cy="16" r="10" fill="#ffffff" stroke="url(#orbitStroke)" stroke-width="4"/>
+    <circle cx="38" cy="92" r="8" fill="#f8fcff" stroke="url(#orbitStroke)" stroke-width="3.5"/>
+    <circle cx="222" cy="154" r="9" fill="#ffffff" stroke="url(#orbitStroke)" stroke-width="4"/>
+  </g>
+
+  <g class="orbit-fast" filter="url(#softGlow)">
+    <ellipse cx="130" cy="120" rx="98" ry="54" stroke="url(#orbitStroke)" stroke-width="2.7" opacity="0.54" transform="rotate(-24 130 120)"/>
+    <ellipse cx="130" cy="120" rx="98" ry="54" stroke="url(#orbitStroke)" stroke-width="2.7" opacity="0.42" transform="rotate(28 130 120)"/>
+    <circle cx="224" cy="104" r="7.5" fill="#ffffff" stroke="url(#orbitStroke)" stroke-width="3"/>
+    <circle cx="84" cy="30" r="6.6" fill="#ffffff" stroke="url(#orbitStroke)" stroke-width="2.7"/>
+  </g>
+
+  <g filter="url(#strongGlow)">
+    <path d="M48 120C71 86 100 68 130 68C160 68 189 86 212 120C189 154 160 172 130 172C100 172 71 154 48 120Z" fill="#ffffff" fill-opacity="0.08" stroke="url(#orbitStroke)" stroke-width="7" stroke-linejoin="round"/>
+  </g>
+
+  <g class="mesh">
+    <circle cx="130" cy="120" r="46" fill="url(#irisFill)" opacity="0.98"/>
+    <circle cx="130" cy="120" r="25" fill="#071134"/>
+    <circle cx="130" cy="120" r="32" fill="url(#innerHalo)" opacity="0.84"/>
+    <g stroke="#dff8ff" stroke-opacity="0.58" stroke-width="1.6">
+      <path d="M98 111L114 94L141 92L161 108L160 137L136 151L108 144L98 111Z"/>
+      <path d="M114 94L127 108L141 92"/>
+      <path d="M127 108L160 137"/>
+      <path d="M108 144L127 108L136 151"/>
+      <path d="M98 111L127 108L161 108"/>
+    </g>
+    <g fill="#f4fcff">
+      <circle cx="114" cy="94" r="2.7"/>
+      <circle cx="141" cy="92" r="2.7"/>
+      <circle cx="161" cy="108" r="2.7"/>
+      <circle cx="160" cy="137" r="2.7"/>
+      <circle cx="136" cy="151" r="2.7"/>
+      <circle cx="108" cy="144" r="2.7"/>
+      <circle cx="98" cy="111" r="2.7"/>
+      <circle cx="127" cy="108" r="3"/>
+    </g>
+  </g>
+
+  <g class="pulse-core" filter="url(#softGlow)">
+    <circle cx="130" cy="120" r="12" fill="#0a1237"/>
+    <circle cx="147" cy="103" r="7" fill="#ffffff" fill-opacity="0.96"/>
+    <circle cx="116" cy="113" r="4.5" fill="#8fe8ff" fill-opacity="0.9"/>
+  </g>
+
+  <g class="signal" filter="url(#softGlow)">
+    <circle cx="27" cy="156" r="4.4" fill="#ffffff" fill-opacity="0.9"/>
+    <circle cx="39" cy="167" r="2.4" fill="#7fdfff"/>
+    <circle cx="236" cy="61" r="4" fill="#ffffff" fill-opacity="0.86"/>
+  </g>
+
+  <g transform="translate(270 38)">
+    <text x="0" y="84" fill="url(#wordAccent)" font-size="86" font-weight="800" letter-spacing="6" font-family="Sora, Avenir Next, Segoe UI, sans-serif">DARSH</text>
+    <text x="3" y="124" fill="#6676a8" font-size="15" font-weight="700" letter-spacing="4.3" font-family="Sora, Avenir Next, Segoe UI, sans-serif">PRE-DECISION BEHAVIORAL INTELLIGENCE</text>
+    <rect x="2" y="154" width="366" height="4" rx="2" fill="url(#wordUnderline)"/>
+    <g class="word-sheen">
+      <rect x="-20" y="0" width="130" height="172" fill="url(#sheenGradient)" transform="skewX(-18)"/>
+    </g>
+  </g>
+</svg>

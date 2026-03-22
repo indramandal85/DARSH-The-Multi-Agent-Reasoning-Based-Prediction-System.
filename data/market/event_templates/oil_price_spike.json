@@ -1,0 +1,55 @@
+{
+  "template_id": "oil_price_spike",
+  "display_name": "Oil Price Spike",
+  "category": "global_shock",
+  "event_type_key": "oil_price_spike",
+  "description": "Brent crude spikes and creates imported-inflation pressure across Indian markets.",
+  "required_inputs": [
+    {
+      "key": "brent_price_usd",
+      "label": "Current Brent crude price (USD)",
+      "placeholder": "98",
+      "type": "number",
+      "default": 98
+    },
+    {
+      "key": "one_day_spike_percent",
+      "label": "One-day crude spike (%)",
+      "placeholder": "7.5",
+      "type": "number",
+      "default": 7.5
+    },
+    {
+      "key": "usd_inr_level",
+      "label": "USD/INR level",
+      "placeholder": "83.1",
+      "type": "number",
+      "default": 83.1
+    },
+    {
+      "key": "shipping_disruption",
+      "label": "Is shipping / logistics disruption also involved?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "opec_supply_signal",
+      "label": "Has OPEC signalled tighter supply?",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "situation_template": "Brent crude has climbed to USD {brent_price_usd} after {shock_text}, with a one-day move of {one_day_spike_percent}%. {rupee_text} {shipping_text}{opec_text}{inflation_risk_text}",
+  "round_events": [
+    "Round 1 (0-2 hours): Energy, aviation, and transport-sensitive names react first while inflation concerns push traders into defensive positioning.",
+    "Round 2 (2-12 hours): Analysts begin marking up fuel, freight, and imported-input assumptions across chemicals, auto, and consumption sectors.",
+    "Round 3 (12-72 hours): The market starts pricing second-order effects through inflation, currency pressure, and policy-response expectations."
+  ],
+  "default_actions": [
+    "increase energy beneficiary exposure",
+    "reduce aviation and fuel-sensitive names",
+    "review inflation-sensitive sectors",
+    "monitor rupee and bond yields",
+    "track follow-through in chemicals and auto"
+  ]
+}

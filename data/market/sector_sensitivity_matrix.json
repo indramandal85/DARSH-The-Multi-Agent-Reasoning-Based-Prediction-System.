@@ -1,0 +1,88 @@
+{
+  "event_type_mappings": {
+    "rbi_rate_hike": {
+      "banking_private": {"direction": "negative", "magnitude": 0.75},
+      "banking_psu": {"direction": "negative", "magnitude": 0.7},
+      "nbfc": {"direction": "strong_negative", "magnitude": 0.88},
+      "real_estate": {"direction": "strong_negative", "magnitude": 0.85},
+      "insurance": {"direction": "positive", "magnitude": 0.55},
+      "it_services": {"direction": "neutral", "magnitude": 0.2},
+      "fmcg": {"direction": "neutral", "magnitude": 0.15},
+      "auto": {"direction": "negative", "magnitude": 0.65},
+      "energy_oil_gas": {"direction": "neutral", "magnitude": 0.25},
+      "pharma": {"direction": "neutral", "magnitude": 0.2},
+      "capital_goods": {"direction": "negative", "magnitude": 0.55},
+      "fintech": {"direction": "negative", "magnitude": 0.7},
+      "metals_mining": {"direction": "neutral", "magnitude": 0.3},
+      "aviation": {"direction": "negative", "magnitude": 0.35}
+    },
+    "rbi_rate_cut": {
+      "banking_private": {"direction": "positive", "magnitude": 0.72},
+      "real_estate": {"direction": "strong_positive", "magnitude": 0.85},
+      "auto": {"direction": "positive", "magnitude": 0.68},
+      "nbfc": {"direction": "strong_positive", "magnitude": 0.82},
+      "fmcg": {"direction": "neutral", "magnitude": 0.2},
+      "it_services": {"direction": "neutral", "magnitude": 0.15},
+      "aviation": {"direction": "positive", "magnitude": 0.25}
+    },
+    "budget_fiscal_expansion": {
+      "infrastructure": {"direction": "strong_positive", "magnitude": 0.88},
+      "capital_goods": {"direction": "strong_positive", "magnitude": 0.82},
+      "defence": {"direction": "positive", "magnitude": 0.7},
+      "banking_psu": {"direction": "positive", "magnitude": 0.6},
+      "fmcg": {"direction": "positive", "magnitude": 0.55},
+      "real_estate": {"direction": "positive", "magnitude": 0.65},
+      "it_services": {"direction": "neutral", "magnitude": 0.25},
+      "pharma": {"direction": "neutral", "magnitude": 0.2},
+      "aviation": {"direction": "neutral", "magnitude": 0.15}
+    },
+    "oil_price_spike": {
+      "aviation": {"direction": "strong_negative", "magnitude": 0.9},
+      "auto": {"direction": "negative", "magnitude": 0.65},
+      "chemicals": {"direction": "negative", "magnitude": 0.75},
+      "energy_oil_gas": {"direction": "strong_positive", "magnitude": 0.85},
+      "fmcg": {"direction": "negative", "magnitude": 0.4},
+      "pharma": {"direction": "neutral", "magnitude": 0.2},
+      "it_services": {"direction": "neutral", "magnitude": 0.15}
+    },
+    "fii_large_outflow": {
+      "banking_private": {"direction": "strong_negative", "magnitude": 0.8},
+      "it_services": {"direction": "negative", "magnitude": 0.7},
+      "consumption": {"direction": "negative", "magnitude": 0.6},
+      "banking_psu": {"direction": "negative", "magnitude": 0.55},
+      "metals_mining": {"direction": "negative", "magnitude": 0.65},
+      "fmcg": {"direction": "neutral", "magnitude": 0.25},
+      "aviation": {"direction": "negative", "magnitude": 0.4}
+    },
+    "regulatory_shock_sebi": {
+      "fintech": {"direction": "strong_negative", "magnitude": 0.88},
+      "banking_private": {"direction": "negative", "magnitude": 0.5},
+      "it_services": {"direction": "neutral", "magnitude": 0.2},
+      "fmcg": {"direction": "neutral", "magnitude": 0.1}
+    },
+    "geopolitical_tension_india": {
+      "defence": {"direction": "strong_positive", "magnitude": 0.82},
+      "banking_private": {"direction": "negative", "magnitude": 0.55},
+      "it_services": {"direction": "negative", "magnitude": 0.45},
+      "energy_oil_gas": {"direction": "positive", "magnitude": 0.6},
+      "fmcg": {"direction": "neutral", "magnitude": 0.2},
+      "pharma": {"direction": "positive", "magnitude": 0.35},
+      "aviation": {"direction": "negative", "magnitude": 0.55}
+    }
+  },
+  "behavioral_to_regime_mapping": {
+    "panic_dominant": {
+      "above_70_percent": "policy_shock",
+      "40_to_70_percent": "risk_off"
+    },
+    "cautious_dominant": {
+      "above_70_percent": "uncertainty_hold",
+      "40_to_70_percent": "risk_off"
+    },
+    "optimistic_dominant": {
+      "above_70_percent": "relief_rally",
+      "40_to_70_percent": "risk_on"
+    },
+    "divided_dominant": "sector_rotation"
+  }
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "event_id": "india_demonetization_2016",
+    "date": "2016-11-08",
+    "description": "PM Modi announces sudden demonetization of Rs 500 and Rs 1000 notes, affecting 86% of India's currency in circulation",
+    "document_file": "demonetization_2016.txt",
+    "actual_outcome": "panic",
+    "outcome_notes": "Massive bank queues, cash shortage for months, GDP dip, widespread public anxiety",
+    "domain": "economic_policy"
+  },
+  {
+    "event_id": "rbi_rate_hike_2022",
+    "date": "2022-05-04",
+    "description": "RBI makes emergency off-cycle rate hike of 40 basis points to combat rising inflation",
+    "document_file": "rbi_rate_hike_2022.txt",
+    "actual_outcome": "panic",
+    "outcome_notes": "Sensex fell 1400 points, bond yields spiked, markets shocked by off-cycle decision",
+    "domain": "monetary_policy"
+  },
+  {
+    "event_id": "india_gdp_recovery_2021",
+    "date": "2021-08-31",
+    "description": "India posts 20.1% GDP growth in Q1 FY22, strongest quarterly growth on record",
+    "document_file": "gdp_recovery_2021.txt",
+    "actual_outcome": "optimistic",
+    "outcome_notes": "Growth surprise, record equity highs, rising FII participation, and broad recovery confidence drove an upbeat market read",
+    "domain": "economic_data"
+  },
+  {
+    "event_id": "india_ukraine_oil_2022",
+    "date": "2022-03-01",
+    "description": "India faces pressure from western allies over Russia-Ukraine war stance as oil prices surge past 100 dollars, threatening inflation",
+    "document_file": "ukraine_oil_crisis_2022.txt",
+    "actual_outcome": "cautious",
+    "outcome_notes": "India maintained cautious diplomatic stance, rupee weakened but panic was contained",
+    "domain": "geopolitical"
+  },
+  {
+    "event_id": "paytm_crisis_2024",
+    "date": "2024-01-31",
+    "description": "RBI orders Paytm Payments Bank to stop accepting deposits, triggering fintech sector concern and regulatory scrutiny of digital banking",
+    "document_file": "paytm_rbi_2024.txt",
+    "actual_outcome": "cautious",
+    "outcome_notes": "Paytm stock crashed 40% but broader fintech sector watched cautiously rather than panicking",
+    "domain": "fintech_regulation"
+  },
+  {
+    "event_id": "india_corporate_tax_cut_2019",
+    "date": "2019-09-20",
+    "description": "Government slashes corporate tax rates for domestic companies and new manufacturing units, surprising markets with a large-growth stimulus",
+    "document_file": "corporate_tax_cut_2019.txt",
+    "actual_outcome": "optimistic",
+    "outcome_notes": "Sensex and Nifty rallied sharply, cyclicals and financials surged, and the policy was treated as a strong pro-growth pivot",
+    "domain": "fiscal_policy"
+  },
+  {
+    "event_id": "india_covid_lockdown_2020",
+    "date": "2020-03-24",
+    "description": "India announces a nationwide COVID-19 lockdown, freezing most transport, retail, and business activity with only a few hours notice",
+    "document_file": "covid_lockdown_2020.txt",
+    "actual_outcome": "panic",
+    "outcome_notes": "Markets hit lower circuits, volatility exploded, and investors rushed toward cash, gold, and defensive positioning",
+    "domain": "public_health"
+  },
+  {
+    "event_id": "india_election_result_2024",
+    "date": "2024-06-04",
+    "description": "Lok Sabha results show the NDA returning to power but with a weaker-than-expected mandate, forcing coalition dependence and policy repricing",
+    "document_file": "election_result_2024.txt",
+    "actual_outcome": "divided",
+    "outcome_notes": "Initial shock selling was followed by selective recovery, leaving institutions and sectors split between continuity and policy-drift scenarios",
+    "domain": "politics"
+  }
+]

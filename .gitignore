@@ -1,0 +1,52 @@
+# OS / System Files
+.DS_Store
+Thumbs.db
+
+# Python / Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Frontend / Node.js (Vue)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.npm/
+
+# Vector Databases & Local DBs
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+vector_store/
+
+# Generated Data & Output Artifacts
+# Ignoring contents but leaving the folders trackable if you add a .gitkeep
+data/inputs/*
+!data/inputs/.gitkeep
+data/graphs/*
+!data/graphs/.gitkeep
+data/simulations/*
+!data/simulations/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+data/agent_memories/*
+!data/agent_memories/.gitkeep
+
+/Documents
+# Local LLM storage (just in case Ollama models are accidentally placed here)
+models/
+
+# Environment Variables / Secrets
+.env
+.env.local
+.env.*.local
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp

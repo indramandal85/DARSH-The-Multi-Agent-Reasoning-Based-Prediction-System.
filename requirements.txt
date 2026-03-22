@@ -1,0 +1,32 @@
+# ── MODULE 1 ── Core foundation
+requests==2.31.0
+ollama==0.3.3
+
+# ── MODULE 2 ── Knowledge graph
+networkx==3.2.1
+chromadb==0.4.24
+sentence-transformers==2.7.0
+numpy==1.26.4
+
+# ── MODULE 3 ── Causal model
+pgmpy==0.1.25
+# dowhy removed — replaced by pgmpy + networkx (cleaner on Apple Silicon)
+
+# ── MODULE 4 ── Agent society
+# mesa removed — using BaseAgent inheritance directly (cleaner, more educational)
+# All agent types built on core/base_agent.py from Module 1
+
+# ── MODULE 5 ── Simulation engine
+numpy==1.26.4
+pandas==2.2.1
+
+# ── MODULE 6 ── Analysis and reporting 
+scikit-learn==1.4.1
+matplotlib==3.8.3
+
+# ── MODULE 7 ── Web API and UI 
+flask==3.0.2
+flask-cors==4.0.0
+
+# __ MODULE Phase 2___
+feedparser==6.0.11         # live RSS news ingestion — Phase 3 H4

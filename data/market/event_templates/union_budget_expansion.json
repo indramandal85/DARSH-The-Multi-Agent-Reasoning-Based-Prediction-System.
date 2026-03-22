@@ -1,0 +1,55 @@
+{
+  "template_id": "union_budget_expansion",
+  "display_name": "Union Budget Expansion",
+  "category": "fiscal_policy",
+  "event_type_key": "budget_fiscal_expansion",
+  "description": "Growth-oriented Union Budget with capex and sectoral support.",
+  "required_inputs": [
+    {
+      "key": "capex_growth_percent",
+      "label": "Government capex growth (%)",
+      "placeholder": "18",
+      "type": "number",
+      "default": 18
+    },
+    {
+      "key": "fiscal_deficit_percent",
+      "label": "Fiscal deficit target (%)",
+      "placeholder": "5.4",
+      "type": "number",
+      "default": 5.4
+    },
+    {
+      "key": "gift_nifty_move_percent",
+      "label": "Gift Nifty pre-open move (%)",
+      "placeholder": "1.1",
+      "type": "number",
+      "default": 1.1
+    },
+    {
+      "key": "defence_allocation_boost",
+      "label": "Was defence allocation meaningfully increased?",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "consumption_relief_measures",
+      "label": "Were there consumption / rural relief measures?",
+      "type": "boolean",
+      "default": true
+    }
+  ],
+  "situation_template": "The Union Budget has delivered a {budget_tone} stance with {capex_growth_percent}% capex growth and a fiscal deficit target of {fiscal_deficit_percent}%. {market_reaction_text} The spending profile is viewed as {capex_growth_bucket} for infrastructure and capital goods. {defence_text}{consumption_text}{fiscal_balance_text}",
+  "round_events": [
+    "Round 1 (0-2 hours): Infrastructure, capital goods, defence, and PSU-linked names see immediate attention as sell-side desks publish first-cut notes.",
+    "Round 2 (2-12 hours): Fund managers compare the growth impulse versus fiscal discipline, and sector rotation begins across budget-linked names.",
+    "Round 3 (12-72 hours): Street focus shifts to execution credibility, tender flow, fiscal arithmetic, and whether the rally broadens or narrows."
+  ],
+  "default_actions": [
+    "increase infrastructure exposure",
+    "screen capital goods beneficiaries",
+    "rotate into budget-linked sectors",
+    "monitor fiscal discipline concerns",
+    "track follow-through in PSU and defence names"
+  ]
+}

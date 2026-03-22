@@ -1,0 +1,63 @@
+{
+  "template_id": "rbi_rate_hike",
+  "display_name": "RBI Rate Hike",
+  "category": "monetary_policy",
+  "event_type_key": "rbi_rate_hike",
+  "description": "RBI Monetary Policy Committee raises the repo rate and reprices rate-sensitive sectors.",
+  "required_inputs": [
+    {
+      "key": "hike_magnitude_bps",
+      "label": "Hike magnitude (basis points)",
+      "placeholder": "40",
+      "type": "number",
+      "default": 40
+    },
+    {
+      "key": "current_repo_rate_percent",
+      "label": "Current repo rate (%) before the hike",
+      "placeholder": "6.50",
+      "type": "number",
+      "default": 6.5
+    },
+    {
+      "key": "was_off_cycle",
+      "label": "Was this an off-cycle / emergency move?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "current_inflation_percent",
+      "label": "Current CPI inflation (%)",
+      "placeholder": "6.8",
+      "type": "number",
+      "default": 6.8
+    },
+    {
+      "key": "sensex_immediate_move",
+      "label": "Sensex immediate reaction (points, +/-)",
+      "placeholder": "-1400",
+      "type": "number",
+      "default": -1400
+    },
+    {
+      "key": "market_consensus_expected",
+      "label": "Did consensus expect this move?",
+      "type": "boolean",
+      "default": false
+    }
+  ],
+  "situation_template": "The Reserve Bank of India has {off_cycle_text}raised the repo rate by {hike_magnitude_bps} basis points to {new_rate}%. CPI inflation is at {current_inflation_percent}%, {inflation_band_comment}. {surprise_text}Sensex has moved {sensex_immediate_move} points in a {market_shock_label}. The rupee {rupee_direction}.",
+  "round_events": [
+    "Round 1 (0-2 hours): Analysts react to the policy surprise, banking and NBFC names see immediate repricing, and RBI commentary starts shaping expectations.",
+    "Round 2 (2-12 hours): Bond yields adjust by roughly {bond_yield_estimate} basis points, fund managers reassess rate-sensitive sectors, and loan/EMI discussions dominate headlines.",
+    "Round 3 (12-72 hours): Finance Ministry tone, broker notes, and second-order effects on capex, housing demand, and consumption become clearer."
+  ],
+  "default_actions": [
+    "increase fixed deposit allocation",
+    "reduce rate-sensitive equity exposure",
+    "buy defensive sectors",
+    "consult risk committee",
+    "wait for policy clarification",
+    "review banking and NBFC positions"
+  ]
+}
