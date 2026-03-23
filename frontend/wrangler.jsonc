@@ -1,0 +1,9 @@
+{
+  // If your Cloudflare Worker service uses a different name in the dashboard,
+  // change this value to match it exactly.
+  "name": "darsh-demo",
+  "compatibility_date": "2026-03-24",
+  "assets": {
+    "directory": "./demo-publish"
+  }
+}
