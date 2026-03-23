@@ -547,5 +547,5 @@ tests/        Module and phase-level test coverage
 
 ## License
 
-This repository currently does **not** include a standalone license file.  
-If you plan to distribute or open-source it publicly, add a `LICENSE` file before release.
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+
