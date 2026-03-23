@@ -3,85 +3,12 @@ from statistics import mean
 
 from agents.belief_state import OUTCOMES
 from agents.market_roles import MARKET_ROLES
+from analysis.market_geography import (
+    DEFAULT_GEOGRAPHY,
+    get_market_config,
+    resolve_market_geography,
+)
 from analysis.market_impact_mapper import classify_market_regime, normalize_behavioral_distribution
-
-
-# Phase 5 anchors. Retail / MF / FII values follow the agreed product plan.
-# The remaining role counts are model scaling anchors for institution cohorts.
-INDIA_MARKET_POPULATION_2024 = {
-    "RETAIL_TRADER": {
-        "population_count": 40_000_000,
-        "unit_label": "active retail trading accounts",
-        "capital_influence": 0.55,
-        "velocity_influence": 1.00,
-    },
-    "DOMESTIC_MUTUAL_FUND": {
-        "population_count": 47_000_000,
-        "unit_label": "mutual fund folios",
-        "capital_influence": 0.90,
-        "velocity_influence": 0.45,
-    },
-    "FII_ANALYST": {
-        "population_count": 12_000,
-        "unit_label": "foreign institutional desks",
-        "capital_influence": 1.00,
-        "velocity_influence": 0.70,
-    },
-    "HEDGE_FUND_PM": {
-        "population_count": 450,
-        "unit_label": "hedge fund strategy desks",
-        "capital_influence": 0.95,
-        "velocity_influence": 0.85,
-    },
-    "PRIVATE_BANK_TREASURY": {
-        "population_count": 320,
-        "unit_label": "private bank treasury desks",
-        "capital_influence": 0.82,
-        "velocity_influence": 0.50,
-    },
-    "PSU_BANK_DESK": {
-        "population_count": 180,
-        "unit_label": "PSU banking desks",
-        "capital_influence": 0.78,
-        "velocity_influence": 0.44,
-    },
-    "BROKER_RESEARCH_DESK": {
-        "population_count": 3_500,
-        "unit_label": "broker research desks",
-        "capital_influence": 0.42,
-        "velocity_influence": 0.90,
-    },
-    "FINANCIAL_MEDIA_EDITOR": {
-        "population_count": 1_200,
-        "unit_label": "financial media desks",
-        "capital_influence": 0.18,
-        "velocity_influence": 0.98,
-    },
-    "REGULATOR_POLICY_DESK": {
-        "population_count": 75,
-        "unit_label": "regulator policy teams",
-        "capital_influence": 0.70,
-        "velocity_influence": 0.28,
-    },
-    "MINISTRY_POLICY_TEAM": {
-        "population_count": 60,
-        "unit_label": "ministry policy teams",
-        "capital_influence": 0.65,
-        "velocity_influence": 0.25,
-    },
-    "CORPORATE_TREASURY": {
-        "population_count": 8_000,
-        "unit_label": "corporate treasury teams",
-        "capital_influence": 0.58,
-        "velocity_influence": 0.52,
-    },
-    "SECTOR_OPERATING_FIRM": {
-        "population_count": 250_000,
-        "unit_label": "listed / large operating firms",
-        "capital_influence": 0.36,
-        "velocity_influence": 0.62,
-    },
-}
 
 BLEND_WEIGHTS = {
     "participation": 0.30,
@@ -224,10 +151,27 @@ def compute_population_weighted_sentiment(
     branch_results: list,
     topic: str,
     event_type: str = "general",
+    geography: str = None,
+    graph_path: str = None,
 ) -> dict:
+    resolved_geography = resolve_market_geography(
+        geography=geography,
+        graph_path=graph_path,
+        topic=topic,
+        event_type=event_type,
+    )
+    market_config = get_market_config(resolved_geography)
+    role_weights = market_config.get("role_weights", {})
+
+    print(
+        "  [market_population] Using "
+        f"'{resolved_geography}' market structure "
+        f"({market_config.get('description', 'unknown scope')})"
+    )
+
     final_agents = _extract_final_round_agents(branch_results)
     total_known_population = sum(
-        meta["population_count"] for meta in INDIA_MARKET_POPULATION_2024.values()
+        meta["population_count"] for meta in role_weights.values()
     ) or 1
 
     grouped = {}
@@ -237,7 +181,9 @@ def compute_population_weighted_sentiment(
 
     cohort_entries = []
     for role_key, rows in grouped.items():
-        role_meta = INDIA_MARKET_POPULATION_2024.get(role_key)
+        role_meta = role_weights.get(role_key)
+        if not role_meta and resolved_geography != DEFAULT_GEOGRAPHY:
+            role_meta = get_market_config(DEFAULT_GEOGRAPHY).get("role_weights", {}).get(role_key)
         if not role_meta:
             continue
 
@@ -292,7 +238,9 @@ def compute_population_weighted_sentiment(
 
     return {
         "event_type": event_type,
-        "population_data_year": 2024,
+        "market_geography": resolved_geography,
+        "market_scope_description": market_config.get("description", ""),
+        "population_data_year": market_config.get("population_data_year", 2024),
         "population_method": "population_weighted_market_cohort_model",
         "sampled_agent_count": len(final_agents),
         "sampled_cohort_count": len(cohort_entries),
@@ -318,8 +266,9 @@ def compute_population_weighted_sentiment(
             blended_distribution=blended_distribution,
         ),
         "data_note": (
-            "Retail traders, mutual fund folios, and FII desks are anchored to the "
-            "Phase 5 model plan. Other institutional counts are cohort-scaling anchors "
-            "used to weight representative market roles without simulating every participant directly."
+            f"Geography-aware weighting resolved this run to '{resolved_geography}'. "
+            "Cohorts use DARSH's shared market-role taxonomy, then apply geography-specific "
+            "participation, capital, and velocity anchors so non-India scenarios are not silently "
+            "weighted with India-only assumptions."
         ),
     }

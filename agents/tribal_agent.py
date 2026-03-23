@@ -24,7 +24,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.base_agent import BaseAgent
-from core.llm_caller import ask_llm
 
 
 class TribalAgent(BaseAgent):
@@ -38,6 +37,7 @@ class TribalAgent(BaseAgent):
         super().__init__(agent_id, name, personality, background,
                         chroma_client=chroma_client, simulation_id=simulation_id)
         self.agent_type = "TRIBAL"
+        self.temperature = 0.5
         # Which group this agent identifies with most strongly
         self.tribe = tribe
         # What the tribe currently believes (updated externally by simulator)
@@ -58,7 +58,7 @@ class TribalAgent(BaseAgent):
             f"Memories: {self.memory_as_text(query=world_context)}\n\n"
             f"How do you interpret this through your group's lens? Max 2 sentences."
         )
-        return ask_llm(prompt, system_prompt=system)
+        return self._ask_thought_llm(prompt, system)
 
     def update_tribe_consensus(self, new_consensus: str):
         """Called by the simulator when group opinion shifts."""

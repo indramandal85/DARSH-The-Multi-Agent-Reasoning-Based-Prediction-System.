@@ -63,6 +63,10 @@ class BaseAgent:
         # Round counter
         self.round = 0
 
+        # Thinking temperature controls free-form variance only.
+        # Structured JSON calls stay deterministic unless explicitly overridden.
+        self.temperature = 0.1
+
 
     # ── MEMORY ────────────────────────────────────────────────────────────────
 
@@ -98,6 +102,14 @@ class BaseAgent:
 
     # ── PHASE 1: THINK ────────────────────────────────────────────────────────
 
+    def _ask_thought_llm(self, prompt: str, system_prompt: str) -> str:
+        """Route all free-form thinking calls through the agent's own temperature."""
+        return ask_llm(
+            prompt,
+            system_prompt=system_prompt,
+            temperature=self.temperature,
+        )
+
     def think(self, world_context: str, social_feed: str = "") -> str:
         """
         PHASE 1: Read the world, read social feed, produce a thought.
@@ -128,7 +140,7 @@ class BaseAgent:
             f"First person. In character. Maximum 2 sentences."
         )
 
-        return ask_llm(prompt, system_prompt=system)
+        return self._ask_thought_llm(prompt, system)
 
 
     # ── PHASE 2: DECIDE ───────────────────────────────────────────────────────

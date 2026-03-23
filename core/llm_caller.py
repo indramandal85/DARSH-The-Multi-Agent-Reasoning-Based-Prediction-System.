@@ -130,13 +130,18 @@ def _coerce_json_object(raw: str):
 
 # ── FUNCTION 1: plain text response ───────────────────────────────────────────
 
-def ask_llm(prompt: str, system_prompt: str = None) -> str:
+def ask_llm(
+    prompt: str,
+    system_prompt: str = None,
+    temperature: float = 0.7,
+) -> str:
     """
     Send a prompt to Llama. Get a plain text response back.
 
     prompt        : your question or instruction
     system_prompt : optional personality for the model this call only.
                     e.g. "You are a cautious economics student."
+    temperature   : generation temperature for free-form text calls.
     Returns       : model response as a string
     """
 
@@ -145,7 +150,7 @@ def ask_llm(prompt: str, system_prompt: str = None) -> str:
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.7,
+            "temperature": float(temperature),
             "num_predict": 512
         }
     }
@@ -176,12 +181,18 @@ def ask_llm(prompt: str, system_prompt: str = None) -> str:
 
 # ── FUNCTION 2: structured JSON response ──────────────────────────────────────
 
-def ask_llm_json(prompt: str, system_prompt: str = None) -> dict:
+def ask_llm_json(
+    prompt: str,
+    system_prompt: str = None,
+    temperature: float = 0.0,
+) -> dict:
     """
     Same as ask_llm() but forces JSON output.
 
     Use this when you need structured data back — e.g. an agent
     returning both an 'action' and a 'reason' as separate fields.
+
+    temperature: defaults to 0.0 because structured JSON calls should stay stable.
 
     Returns: Python dict from parsed JSON.
              If parsing fails: {"raw": <text>, "parse_error": True}
@@ -202,7 +213,7 @@ def ask_llm_json(prompt: str, system_prompt: str = None) -> dict:
         "format": "json",
         "system": full_system,
         "options": {
-            "temperature": 0.0,
+            "temperature": float(temperature),
             "num_predict": 768
         }
     }

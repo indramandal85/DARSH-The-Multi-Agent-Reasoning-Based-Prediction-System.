@@ -23,7 +23,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.base_agent import BaseAgent
-from core.llm_caller import ask_llm
 
 
 class EmotionalAgent(BaseAgent):
@@ -37,6 +36,7 @@ class EmotionalAgent(BaseAgent):
         super().__init__(agent_id, name, personality, background,
                         chroma_client=chroma_client, simulation_id=simulation_id)
         self.agent_type = "EMOTIONAL"
+        self.temperature = 0.7
         # Emotional state: -1.0 = very anxious, 0 = neutral, +1.0 = optimistic
         self.emotional_state = 0.0
 
@@ -58,7 +58,7 @@ class EmotionalAgent(BaseAgent):
             f"What is your immediate emotional reaction?\n"
             f"Respond emotionally, viscerally. Max 2 sentences."
         )
-        thought = ask_llm(prompt, system_prompt=system)
+        thought = self._ask_thought_llm(prompt, system)
 
         negative_words = ["worried","anxious","fear","panic","crash","crisis","danger"]
         positive_words = ["confident","opportunity","stable","recover","hopeful"]

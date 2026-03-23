@@ -5,7 +5,7 @@
 # 5 endpoints:
 #   POST /api/upload          — receive a document file
 #   POST /api/build-graph     — run Module 2 knowledge graph builder
-#   POST /api/run-simulation  — run Module 5 parallel simulation
+#   POST /api/run-simulation  — run Module 5 concurrent simulation
 #   GET  /api/get-report      — return the generated report
 #   GET  /api/status/<job_id> — check if a long job is done
 
@@ -462,7 +462,7 @@ def build_graph():
 @api_bp.route("/api/run-simulation", methods=["POST"])
 def run_simulation_endpoint():
     """
-    Run Module 5 parallel simulation.
+    Run Module 5 concurrent simulation.
     Accepts configuration from frontend.
     Returns job_id for polling.
     """
@@ -473,6 +473,7 @@ def run_simulation_endpoint():
     situation   = data.get("situation", "A significant event has occurred.")
     event_type  = data.get("event_type", "general")
     graph_name  = data.get("graph_name", "").strip()
+    market_geography = data.get("market_geography", "").strip().lower() or None
     num_agents  = min(int(data.get("num_agents", 5)), 10)   # cap at 10 for speed
     num_rounds  = min(int(data.get("num_rounds", 3)), 5)    # cap at 5
     num_branches = min(int(data.get("num_branches", 3)), 5)
@@ -494,7 +495,11 @@ def run_simulation_endpoint():
 
     job_id = str(uuid.uuid4())[:8]
     inferred_causal_dag_path = ""
+    inferred_graph_path = ""
     if graph_name:
+        graph_candidate = os.path.join("data", "graphs", f"{graph_name}.json")
+        if os.path.exists(graph_candidate):
+            inferred_graph_path = graph_candidate
         candidate = os.path.join("data", "graphs", f"{graph_name}_causal.json")
         if os.path.exists(candidate):
             inferred_causal_dag_path = candidate
@@ -513,25 +518,27 @@ def run_simulation_endpoint():
                 "pulse": int(time.time() * 1000),
             }
         }
+        live_focus_lock = threading.Lock()
         try:
             from simulation.parallel_branches import run_parallel_branches
 
             def update_live_focus(payload):
-                current = jobs.get(job_id)
-                if not isinstance(current, dict) or current.get("status") != "running":
-                    return
+                with live_focus_lock:
+                    current = jobs.get(job_id)
+                    if not isinstance(current, dict) or current.get("status") != "running":
+                        return
 
-                current["step"] = payload.get("step", current.get("step", "Running simulation..."))
-                current["live_focus"] = {
-                    "kind": payload.get("kind", ""),
-                    "branch_id": payload.get("branch_id", ""),
-                    "round_number": payload.get("round_number", 0),
-                    "round_label": payload.get("round_label", ""),
-                    "market_role": payload.get("market_role", ""),
-                    "agent_name": payload.get("agent_name", ""),
-                    "focus_terms": payload.get("focus_terms", [])[:8],
-                    "pulse": int(time.time() * 1000),
-                }
+                    current["step"] = payload.get("step", current.get("step", "Running simulation..."))
+                    current["live_focus"] = {
+                        "kind": payload.get("kind", ""),
+                        "branch_id": payload.get("branch_id", ""),
+                        "round_number": payload.get("round_number", 0),
+                        "round_label": payload.get("round_label", ""),
+                        "market_role": payload.get("market_role", ""),
+                        "agent_name": payload.get("agent_name", ""),
+                        "focus_terms": payload.get("focus_terms", [])[:8],
+                        "pulse": int(time.time() * 1000),
+                    }
 
             jobs[job_id]["step"] = "Running agents across rounds..."
             results = run_parallel_branches(
@@ -544,6 +551,8 @@ def run_simulation_endpoint():
                 num_rounds        = num_rounds,
                 event_type        = event_type,
                 causal_dag_path   = inferred_causal_dag_path or None,
+                graph_path        = inferred_graph_path or None,
+                geography         = market_geography,
                 status_callback   = update_live_focus
             )
 
@@ -632,7 +641,9 @@ def run_simulation_endpoint():
                     behavioral_distribution=smooth_probs,
                     event_type=event_type,
                     topic=topic,
-                    branch_count=num_branches
+                    branch_count=num_branches,
+                    geography=market_geography,
+                    graph_path=inferred_graph_path or None,
                 )
             except Exception as e:
                 print(f"  Warning: market impact generation failed: {e}")
@@ -683,6 +694,11 @@ def run_simulation_endpoint():
                            "report"           : report,
                            "market_impact"    : market_impact,
                            "population_model" : results.get("population_model"),
+                           "market_geography" : (
+                               (results.get("population_model") or {}).get("market_geography")
+                               or (market_impact or {}).get("market_geography")
+                               or market_geography
+                           ),
                            "event_type"       : event_type,
                            "num_agents"       : num_agents,
                            "num_branches"     : num_branches}

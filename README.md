@@ -127,6 +127,9 @@ DARSH supports a mixed agent society with distinct behavioral styles, including:
 - institutional
 
 These agents do not simply paraphrase each other. They reason with different tendencies, memory traces, and influence behavior.
+Each agent type also uses a distinct free-form thinking temperature:
+`rational` / `institutional` (`0.1`), `contrarian` (`0.4`), `tribal` (`0.5`), and `emotional` (`0.7`).
+Structured JSON decisions and belief updates remain deterministic at `0.0`.
 
 ### 3. Model belief movement, not just final labels
 
@@ -175,7 +178,7 @@ DARSH ends in a professional results surface with:
 - Bayesian-style belief updating
 - Per-agent semantic memory
 - Social influence and communication flow
-- Parallel branch execution for probability distributions
+- Concurrent multi-branch execution via `ThreadPoolExecutor`, guarded for local Ollama compatibility
 - SQLite-backed simulation logging
 
 ### Analysis and evaluation layer
@@ -184,7 +187,8 @@ DARSH ends in a professional results surface with:
 - Historical event backtesting
 - Brier score evaluation
 - Calibration tracking
-- Market impact and population weighting views
+- Geography-aware market impact and population weighting views
+- Auto-detected from graph/topic signals, with optional explicit API override
 
 ### Product and interface layer
 
@@ -210,7 +214,7 @@ Document / Live News / Historical Event
                 ↓
    Multi-Agent Society + Belief Update Dynamics
                 ↓
-     Parallel Simulation Across Branches/Rounds
+    Concurrent Simulation Across Branches/Rounds
                 ↓
        Aggregation + Backtest + Report Engine
                 ↓

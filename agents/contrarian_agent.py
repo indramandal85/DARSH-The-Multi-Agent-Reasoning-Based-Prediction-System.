@@ -24,7 +24,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.base_agent import BaseAgent
-from core.llm_caller import ask_llm
 
 
 class ContrarianAgent(BaseAgent):
@@ -38,6 +37,7 @@ class ContrarianAgent(BaseAgent):
         super().__init__(agent_id, name, personality, background,
                         chroma_client=chroma_client, simulation_id=simulation_id)
         self.agent_type = "CONTRARIAN"
+        self.temperature = 0.4
         # What the contrarian perceives as the current majority view
         self.perceived_majority_view = "No majority view established yet."
 
@@ -57,7 +57,7 @@ class ContrarianAgent(BaseAgent):
             f"What is the mainstream narrative getting WRONG? "
             f"What important angle is everyone overlooking? Max 2 sentences."
         )
-        return ask_llm(prompt, system_prompt=system)
+        return self._ask_thought_llm(prompt, system)
 
     def set_majority_view(self, view: str):
         """Called by simulator to tell this agent what the majority thinks."""

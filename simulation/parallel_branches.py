@@ -1,16 +1,17 @@
 # simulation/parallel_branches.py
 #
-# PARALLEL BRANCH MANAGER — THE KEY SUPERIORITY OVER MIROFISH
+# CONCURRENT BRANCH MANAGER
 #
-# MiroFish runs one simulation → gets one story → reports it as "the future"
+# DARSH runs multiple simulation branches from the same starting conditions
+# and aggregates them into a probability distribution instead of returning
+# a single story as "the future".
 #
-# We run N branches simultaneously → get N different stories →
-# calculate probability of each outcome type.
+# On local Ollama setups, unrestricted fan-out can overwhelm the model server.
+# So branches are submitted concurrently via ThreadPoolExecutor, but a semaphore
+# limits how many full branch runs execute at once.
 #
-# Why do branches differ even with same starting conditions?
-# Because agents use an LLM with temperature > 0, meaning responses
-# have natural variation. Small differences compound across rounds
-# to produce meaningfully different outcomes — just like reality.
+# This gives us real concurrency while staying compatible with typical
+# single-machine local inference setups.
 #
 # This is ensemble simulation — the same approach used in:
 #   - Weather forecasting (ensemble NWP models)
@@ -19,18 +20,25 @@
 
 import sys
 import os
-import json
 import time
-from multiprocessing import Pool, cpu_count
+import concurrent.futures
+import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from simulation.market_timeline import get_branch_narratives
 from simulation.runner import run_simulation
 
 
+_OLLAMA_MAX_CONCURRENT_BRANCHES = max(
+    1,
+    int(os.getenv("DARSH_OLLAMA_MAX_CONCURRENT_BRANCHES", "2"))
+)
+_OLLAMA_SEMAPHORE = threading.Semaphore(_OLLAMA_MAX_CONCURRENT_BRANCHES)
+
+
 def run_single_branch(branch_config: dict, status_callback=None) -> dict:
     """
-    Run one simulation branch. Called by multiprocessing.Pool.
+    Run one simulation branch.
 
     branch_config : dict containing all parameters for run_simulation()
     Returns       : result dict from run_simulation()
@@ -103,6 +111,124 @@ def run_single_branch(branch_config: dict, status_callback=None) -> dict:
         }
 
 
+def _run_single_branch_with_guard(branch_config: dict, status_callback=None) -> dict:
+    """
+    Run one branch while capping how many branches execute concurrently.
+
+    We guard the whole branch instead of individual LLM calls because the
+    current branch pipeline also touches local ChromaDB and SQLite artifacts.
+    A coarse-grained limit is safer for this codebase and still gives real
+    concurrent execution compared with the previous serial loop.
+    """
+    with _OLLAMA_SEMAPHORE:
+        if status_callback is None:
+            return run_single_branch(branch_config)
+        return run_single_branch(branch_config, status_callback=status_callback)
+
+
+def _build_error_branch_result(branch_config: dict, error: Exception) -> dict:
+    """Return a branch-shaped error result so aggregation can continue."""
+    return {
+        "simulation_id": branch_config["simulation_id"],
+        "branch_narrative": branch_config.get("branch_narrative"),
+        "final_outcome": "error",
+        "error": str(error),
+        "action_distribution": {},
+        "avg_final_confidence": 0.0,
+    }
+
+
+def _aggregate_branch_results(
+    topic: str,
+    event_type: str,
+    branch_narratives: list,
+    branch_results: list,
+    elapsed: float,
+    geography: str = None,
+    graph_path: str = None,
+) -> dict:
+    """Aggregate branch outputs into probability and confidence summaries."""
+    outcome_counts = {}
+    all_actions = {}
+    confidences = []
+
+    for result in branch_results:
+        outcome = result.get("final_outcome", "unknown")
+        outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
+
+        for action, count in result.get("action_distribution", {}).items():
+            all_actions[action] = all_actions.get(action, 0) + count
+
+        if result.get("avg_final_confidence"):
+            confidences.append(result["avg_final_confidence"])
+
+    total_branches = len(branch_results)
+
+    outcome_probs = {
+        k: round(v / total_branches * 100, 1)
+        for k, v in outcome_counts.items()
+    }
+
+    from statistics import stdev as _stdev
+    outcome_std = {}
+    for outcome in outcome_probs:
+        branch_probs = [
+            1.0 if b.get("final_outcome") == outcome else 0.0
+            for b in branch_results
+        ]
+        if len(branch_probs) > 1:
+            outcome_std[outcome] = round(_stdev(branch_probs) * 100, 1)
+        else:
+            outcome_std[outcome] = 0.0
+
+    dominant_outcome = max(outcome_counts, key=outcome_counts.get)
+    consensus_action = max(all_actions, key=all_actions.get) if all_actions else "none"
+    overall_confidence = round(
+        sum(confidences) / len(confidences), 3
+    ) if confidences else 0.5
+    dominant_prob = outcome_probs[dominant_outcome]
+    dominant_std = outcome_std.get(dominant_outcome, 0.0)
+
+    prediction = (
+        f"Across {total_branches} simulation branches, the most likely outcome is "
+        f"'{dominant_outcome}' with {dominant_prob}% probability "
+        f"(±{dominant_std}% across branches). "
+        f"The dominant agent behavior was to '{consensus_action}'. "
+        f"Average agent confidence: {overall_confidence:.1%}."
+    )
+
+    population_model = None
+    try:
+        from analysis.india_market_population import compute_population_weighted_sentiment
+
+        population_model = compute_population_weighted_sentiment(
+            branch_results=branch_results,
+            topic=topic,
+            event_type=event_type,
+            geography=geography,
+            graph_path=graph_path,
+        )
+    except Exception as e:
+        print(f"  Warning: population-weighted cohort model failed: {e}")
+
+    return {
+        "topic": topic,
+        "num_branches": total_branches,
+        "event_type": event_type,
+        "branch_narratives": branch_narratives,
+        "branches": branch_results,
+        "outcome_probs": outcome_probs,
+        "outcome_std": outcome_std,
+        "outcome_counts": outcome_counts,
+        "dominant_outcome": dominant_outcome,
+        "consensus_action": consensus_action,
+        "overall_confidence": overall_confidence,
+        "prediction": prediction,
+        "population_model": population_model,
+        "elapsed_seconds": round(elapsed, 1)
+    }
+
+
 def run_parallel_branches(
     topic: str,
     initial_situation: str,
@@ -115,10 +241,12 @@ def run_parallel_branches(
     knowledge_context: str = "",
     causal_context: str = "",
     causal_dag_path: str = None,      # NEW
+    graph_path: str = None,
+    geography: str = None,
     status_callback = None
 ) -> dict:
     """
-    Run N simulation branches in parallel and aggregate results.
+    Run N simulation branches concurrently and aggregate results.
 
     num_branches : how many independent simulations to run
                    3 is good for testing, 5-10 for real predictions
@@ -140,7 +268,7 @@ def run_parallel_branches(
         pass   # non-fatal
 
     print(f"\n{'='*55}")
-    print(f"  PARALLEL BRANCH SIMULATION")
+    print(f"  CONCURRENT BRANCH SIMULATION")
     print(f"  Topic    : {topic}")
     print(f"  Branches : {num_branches}")
     print(f"  Agents   : {num_agents} per branch")
@@ -170,111 +298,55 @@ def run_parallel_branches(
             "causal_dag_path"  : causal_dag_path   # NEW
         })
 
-    # ── RUN BRANCHES ──────────────────────────────────────────────────────
-    # Use max 3 parallel processes to avoid overwhelming Ollama
-    # Ollama handles one request at a time — parallelism helps with
-    # the Python overhead but actual LLM calls are still sequential
-    max_workers = min(num_branches, 3)
-
     start_time = time.time()
-    branch_results = []
+    branch_results = [None] * len(branch_configs)
 
-    # Note: running sequentially for Ollama compatibility
-    # (Ollama queues parallel requests anyway)
-    print(f"\n  Running {num_branches} branches sequentially")
-    print(f"  (Ollama processes requests one at a time)")
+    print(f"\n  Submitting {num_branches} branches concurrently")
+    print(
+        "  Concurrency guard: "
+        f"{_OLLAMA_MAX_CONCURRENT_BRANCHES} branch"
+        f"{'' if _OLLAMA_MAX_CONCURRENT_BRANCHES == 1 else 'es'} at a time"
+    )
 
-    for config in branch_configs:
-        result = run_single_branch(config, status_callback=status_callback)
-        branch_results.append(result)
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=max(1, len(branch_configs))
+    ) as executor:
+        future_to_index = {
+            executor.submit(
+                _run_single_branch_with_guard,
+                config,
+                status_callback
+            ): index
+            for index, config in enumerate(branch_configs)
+        }
+
+        for future in concurrent.futures.as_completed(future_to_index):
+            index = future_to_index[future]
+            config = branch_configs[index]
+            try:
+                branch_results[index] = future.result()
+            except Exception as e:
+                print(
+                    "  "
+                    f"[Branch {config['simulation_id']}] Executor error: {e}"
+                )
+                branch_results[index] = _build_error_branch_result(config, e)
 
     elapsed = time.time() - start_time
     print(f"\n  All branches complete in {elapsed:.0f} seconds")
-
-    # ── v2: Aggregate using proper mathematical methods ───────────────────
-    outcome_counts = {}
-    all_actions = {}
-    confidences = []
-
-    for result in branch_results:
-        outcome = result.get("final_outcome", "unknown")
-        outcome_counts[outcome] = outcome_counts.get(outcome, 0) + 1
-
-        for action, count in result.get("action_distribution", {}).items():
-            all_actions[action] = all_actions.get(action, 0) + count
-
-        if result.get("avg_final_confidence"):
-            confidences.append(result["avg_final_confidence"])
-
-    total_branches = len(branch_results)
-
-    # Convert counts to percentages for display
-    outcome_probs = {
-        k: round(v / total_branches * 100, 1)
-        for k, v in outcome_counts.items()
-    }
-
-    # v2: also compute standard deviation across branches for confidence intervals
-    from statistics import stdev as _stdev
-    outcome_std = {}
-    for outcome in outcome_probs:
-        branch_probs = [
-            1.0 if b.get("final_outcome") == outcome else 0.0
-            for b in branch_results
-        ]
-        if len(branch_probs) > 1:
-            outcome_std[outcome] = round(_stdev(branch_probs) * 100, 1)
-        else:
-            outcome_std[outcome] = 0.0
-
-    dominant_outcome = max(outcome_counts, key=outcome_counts.get)
-    consensus_action = max(all_actions, key=all_actions.get) if all_actions else "none"
-    overall_confidence = round(
-        sum(confidences) / len(confidences), 3
-    ) if confidences else 0.5
-    dominant_prob = outcome_probs[dominant_outcome]
-    dominant_std  = outcome_std.get(dominant_outcome, 0.0)
-
-    prediction = (
-        f"Across {total_branches} simulation branches, the most likely outcome is "
-        f"'{dominant_outcome}' with {dominant_prob}% probability "
-        f"(±{dominant_std}% across branches). "
-        f"The dominant agent behavior was to '{consensus_action}'. "
-        f"Average agent confidence: {overall_confidence:.1%}."
+    return _aggregate_branch_results(
+        topic=topic,
+        event_type=event_type,
+        branch_narratives=branch_narratives,
+        branch_results=branch_results,
+        elapsed=elapsed,
+        geography=geography,
+        graph_path=graph_path,
     )
-
-    population_model = None
-    try:
-        from analysis.india_market_population import compute_population_weighted_sentiment
-
-        population_model = compute_population_weighted_sentiment(
-            branch_results=branch_results,
-            topic=topic,
-            event_type=event_type
-        )
-    except Exception as e:
-        print(f"  Warning: population-weighted cohort model failed: {e}")
-
-    return {
-        "topic"             : topic,
-        "num_branches"      : total_branches,
-        "event_type"        : event_type,
-        "branch_narratives" : branch_narratives,
-        "branches"          : branch_results,
-        "outcome_probs"     : outcome_probs,
-        "outcome_std"       : outcome_std,
-        "outcome_counts"    : outcome_counts,
-        "dominant_outcome"  : dominant_outcome,
-        "consensus_action"  : consensus_action,
-        "overall_confidence": overall_confidence,
-        "prediction"        : prediction,
-        "population_model"  : population_model,
-        "elapsed_seconds"   : round(elapsed, 1)
-    }
 
 
 def print_results(results: dict):
-    """Pretty-print the parallel branch results."""
+    """Pretty-print the concurrent branch results."""
 
     print(f"\n\n{'='*55}")
     print(f"  PREDICTION RESULTS")

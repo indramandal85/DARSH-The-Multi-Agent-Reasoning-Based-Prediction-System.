@@ -25,7 +25,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.base_agent import BaseAgent
-from core.llm_caller import ask_llm
 
 
 class InstitutionalAgent(BaseAgent):
@@ -39,6 +38,7 @@ class InstitutionalAgent(BaseAgent):
         super().__init__(agent_id, name, personality, background,
                         chroma_client=chroma_client, simulation_id=simulation_id)
         self.agent_type = "INSTITUTIONAL"
+        self.temperature = 0.1
         # What kind of institution this represents
         self.institution_type = institution_type
         # Institutions have mandates — what they are required to do
@@ -62,4 +62,4 @@ class InstitutionalAgent(BaseAgent):
             f"2. What does your mandate require you to consider?\n"
             f"2 sentences. Formal and measured."
         )
-        return ask_llm(prompt, system_prompt=system)
+        return self._ask_thought_llm(prompt, system)

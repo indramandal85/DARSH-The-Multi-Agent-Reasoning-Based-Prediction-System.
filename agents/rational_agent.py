@@ -21,7 +21,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.base_agent import BaseAgent
-from core.llm_caller import ask_llm
 
 
 class RationalAgent(BaseAgent):
@@ -35,6 +34,7 @@ class RationalAgent(BaseAgent):
         super().__init__(agent_id, name, personality, background,
                         chroma_client=chroma_client, simulation_id=simulation_id)
         self.agent_type = "RATIONAL"
+        self.temperature = 0.1
         # Rational agents track an explicit utility score
         self.utility_score = 0.0
 
@@ -57,4 +57,4 @@ class RationalAgent(BaseAgent):
             f"3. What is your calculated conclusion?\n"
             f"Keep total response to 3 sentences. Be analytical, not emotional."
         )
-        return ask_llm(prompt, system_prompt=system)
+        return self._ask_thought_llm(prompt, system)

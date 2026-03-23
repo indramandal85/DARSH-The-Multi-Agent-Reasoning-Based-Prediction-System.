@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from analysis.market_geography import DEFAULT_GEOGRAPHY, resolve_market_geography
 from core.llm_caller import ask_llm_json
 from analysis.market_output_schema import INDIA_SECTORS
 
@@ -31,6 +32,208 @@ SECTOR_REPRESENTATIVE_STOCKS = {
     "capital_goods": ["L&T", "Siemens India", "ABB India", "Cummins India"],
     "aviation": ["InterGlobe Aviation", "SpiceJet", "Air India"],
 }
+
+US_SECTOR_REPRESENTATIVE_STOCKS = {
+    "banks": ["JPMorgan", "Bank of America", "Wells Fargo", "Citigroup"],
+    "regional_banks": ["PNC Financial", "Regions Financial", "Truist", "KeyCorp"],
+    "fintech": ["PayPal", "Block", "Fiserv", "SoFi"],
+    "insurance": ["Berkshire Hathaway", "AIG", "MetLife", "Travelers"],
+    "real_estate": ["Prologis", "Equinix", "Simon Property", "AvalonBay"],
+    "software": ["Microsoft", "Oracle", "Salesforce", "Adobe"],
+    "consumer_staples": ["Walmart", "Costco", "Coca-Cola", "Procter & Gamble"],
+    "pharma_biotech": ["Eli Lilly", "Johnson & Johnson", "Pfizer", "Amgen"],
+    "autos": ["Tesla", "Ford", "General Motors", "Rivian"],
+    "energy": ["Exxon Mobil", "Chevron", "ConocoPhillips", "Schlumberger"],
+    "materials": ["Freeport-McMoRan", "Nucor", "Dow", "DuPont"],
+    "industrials": ["Caterpillar", "Honeywell", "GE Aerospace", "Deere"],
+    "telecom": ["AT&T", "Verizon", "T-Mobile US", "Comcast"],
+    "aerospace_defense": ["Lockheed Martin", "RTX", "Northrop Grumman", "Boeing"],
+    "airlines": ["Delta", "United Airlines", "American Airlines", "Southwest"],
+}
+
+EUROPE_SECTOR_REPRESENTATIVE_STOCKS = {
+    "banks": ["HSBC", "BNP Paribas", "Santander", "Deutsche Bank"],
+    "insurers": ["Allianz", "AXA", "Zurich Insurance", "Prudential"],
+    "real_estate": ["Vonovia", "LEG Immobilien", "Unibail-Rodamco-Westfield", "Klepierre"],
+    "industrials": ["Siemens", "Schneider Electric", "ABB", "Safran"],
+    "construction": ["Vinci", "Bouygues", "Hochtief", "Skanska"],
+    "consumer_staples": ["Nestle", "Unilever", "Danone", "Carrefour"],
+    "luxury_consumption": ["LVMH", "Hermes", "Kering", "Richemont"],
+    "pharma": ["Novo Nordisk", "Roche", "Sanofi", "AstraZeneca"],
+    "autos": ["Volkswagen", "BMW", "Mercedes-Benz", "Stellantis"],
+    "energy": ["Shell", "TotalEnergies", "BP", "Eni"],
+    "telecom": ["Deutsche Telekom", "Orange", "Vodafone", "Telefonica"],
+    "defence": ["BAE Systems", "Rheinmetall", "Thales", "Leonardo"],
+    "airlines": ["Lufthansa", "Ryanair", "IAG", "Air France-KLM"],
+}
+
+CHINA_SECTOR_REPRESENTATIVE_STOCKS = {
+    "banks": ["ICBC", "China Construction Bank", "Bank of China", "Agricultural Bank of China"],
+    "state_enterprises": ["China State Construction", "PetroChina", "Sinopec", "China Railway"],
+    "real_estate": ["China Resources Land", "Longfor", "Poly Developments", "Vanke"],
+    "internet_platforms": ["Tencent", "Alibaba", "Meituan", "JD.com"],
+    "consumer_staples": ["Kweichow Moutai", "Yili", "Wuliangye", "Tingyi"],
+    "pharma": ["Mindray", "WuXi AppTec", "Jiangsu Hengrui", "Sinopharm"],
+    "autos_ev": ["BYD", "Geely", "Li Auto", "NIO"],
+    "energy": ["CNOOC", "China Shenhua", "LONGi", "CATL"],
+    "industrials": ["Sany", "CRRC", "Midea", "Zoomlion"],
+    "telecom": ["China Mobile", "China Telecom", "China Unicom", "ZTE"],
+    "defence": ["AVIC", "Aerospace CH UAV", "Norinco proxies", "CSSC"],
+    "airlines": ["Air China", "China Southern", "China Eastern", "Spring Airlines"],
+}
+
+GLOBAL_SECTOR_REPRESENTATIVE_STOCKS = {
+    "private_banks": ["JPMorgan", "HDFC Bank", "HSBC", "ICICI Bank"],
+    "public_banks": ["SBI", "Bank of China", "BNP Paribas", "Wells Fargo"],
+    "real_estate": ["Prologis", "DLF", "Vonovia", "China Resources Land"],
+    "technology": ["Microsoft", "Infosys", "Tencent", "SAP"],
+    "consumer_staples": ["Nestle", "Walmart", "HUL", "Kweichow Moutai"],
+    "pharma": ["Novo Nordisk", "Sun Pharma", "Eli Lilly", "Roche"],
+    "autos": ["Tesla", "BYD", "Maruti Suzuki", "Volkswagen"],
+    "energy": ["Exxon Mobil", "Reliance Industries", "Shell", "CNOOC"],
+    "materials": ["Tata Steel", "Nucor", "Rio Tinto", "Sinopec"],
+    "infrastructure": ["L&T", "Vinci", "China State Construction", "Caterpillar"],
+    "telecom": ["Bharti Airtel", "AT&T", "Deutsche Telekom", "China Mobile"],
+    "defence": ["HAL", "Lockheed Martin", "BAE Systems", "AVIC"],
+    "fintech": ["PayPal", "Paytm", "Block", "Adyen"],
+    "airlines": ["Delta", "IndiGo", "Lufthansa", "Air China"],
+}
+
+MARKET_SECTOR_SCHEMAS = {
+    "india": {
+        "description": "Indian sector and watchlist schema",
+        "sectors": INDIA_SECTORS,
+        "representative_stocks": SECTOR_REPRESENTATIVE_STOCKS,
+        "matrix_aliases": {sector: sector for sector in INDIA_SECTORS},
+        "monitor_signals": [
+            "Gift Nifty / SGX Nifty direction",
+            "USD/INR and bond yield movement",
+            "First domestic institutional commentary before the open",
+        ],
+    },
+    "us": {
+        "description": "US sector and watchlist schema",
+        "sectors": [
+            "banks", "regional_banks", "fintech", "insurance", "real_estate",
+            "software", "consumer_staples", "pharma_biotech", "autos", "energy",
+            "materials", "industrials", "telecom", "aerospace_defense", "airlines",
+        ],
+        "representative_stocks": US_SECTOR_REPRESENTATIVE_STOCKS,
+        "matrix_aliases": {
+            "banks": "banking_private",
+            "regional_banks": "banking_psu",
+            "fintech": "fintech",
+            "insurance": "insurance",
+            "real_estate": "real_estate",
+            "software": "it_services",
+            "consumer_staples": "fmcg",
+            "pharma_biotech": "pharma",
+            "autos": "auto",
+            "energy": "energy_oil_gas",
+            "materials": "metals_mining",
+            "industrials": "capital_goods",
+            "telecom": "telecom",
+            "aerospace_defense": "defence",
+            "airlines": "aviation",
+        },
+        "monitor_signals": [
+            "Nasdaq and S&P futures direction",
+            "US 2Y yield and DXY movement",
+            "Pre-market bank, broker, and Fed-watch commentary",
+        ],
+    },
+    "europe": {
+        "description": "European sector and watchlist schema",
+        "sectors": [
+            "banks", "insurers", "real_estate", "industrials", "construction",
+            "consumer_staples", "luxury_consumption", "pharma", "autos", "energy",
+            "telecom", "defence", "airlines",
+        ],
+        "representative_stocks": EUROPE_SECTOR_REPRESENTATIVE_STOCKS,
+        "matrix_aliases": {
+            "banks": "banking_private",
+            "insurers": "insurance",
+            "real_estate": "real_estate",
+            "industrials": "capital_goods",
+            "construction": "infrastructure",
+            "consumer_staples": "fmcg",
+            "luxury_consumption": "consumption",
+            "pharma": "pharma",
+            "autos": "auto",
+            "energy": "energy_oil_gas",
+            "telecom": "telecom",
+            "defence": "defence",
+            "airlines": "aviation",
+        },
+        "monitor_signals": [
+            "Euro Stoxx / DAX futures direction",
+            "Bund yields and EUR/USD movement",
+            "ECB, BOE, and large-bank commentary before the open",
+        ],
+    },
+    "china": {
+        "description": "China sector and watchlist schema",
+        "sectors": [
+            "banks", "state_enterprises", "real_estate", "internet_platforms",
+            "consumer_staples", "pharma", "autos_ev", "energy", "industrials",
+            "telecom", "defence", "airlines",
+        ],
+        "representative_stocks": CHINA_SECTOR_REPRESENTATIVE_STOCKS,
+        "matrix_aliases": {
+            "banks": "banking_private",
+            "state_enterprises": "banking_psu",
+            "real_estate": "real_estate",
+            "internet_platforms": "it_services",
+            "consumer_staples": "fmcg",
+            "pharma": "pharma",
+            "autos_ev": "auto",
+            "energy": "energy_oil_gas",
+            "industrials": "capital_goods",
+            "telecom": "telecom",
+            "defence": "defence",
+            "airlines": "aviation",
+        },
+        "monitor_signals": [
+            "CSI 300 / Hong Kong futures direction",
+            "CNY fixing and local bond movement",
+            "PBOC, regulator, and state-media policy tone",
+        ],
+    },
+    "global": {
+        "description": "Global cross-market sector and watchlist schema",
+        "sectors": [
+            "private_banks", "public_banks", "real_estate", "technology",
+            "consumer_staples", "pharma", "autos", "energy", "materials",
+            "infrastructure", "telecom", "defence", "fintech", "airlines",
+        ],
+        "representative_stocks": GLOBAL_SECTOR_REPRESENTATIVE_STOCKS,
+        "matrix_aliases": {
+            "private_banks": "banking_private",
+            "public_banks": "banking_psu",
+            "real_estate": "real_estate",
+            "technology": "it_services",
+            "consumer_staples": "fmcg",
+            "pharma": "pharma",
+            "autos": "auto",
+            "energy": "energy_oil_gas",
+            "materials": "metals_mining",
+            "infrastructure": "infrastructure",
+            "telecom": "telecom",
+            "defence": "defence",
+            "fintech": "fintech",
+            "airlines": "aviation",
+        },
+        "monitor_signals": [
+            "Cross-market index futures and volatility tone",
+            "Dollar, yields, and commodity direction",
+            "Large-bank and macro-desk commentary before cash open",
+        ],
+    },
+}
+
+
+def _get_market_sector_schema(geography: str) -> dict:
+    return MARKET_SECTOR_SCHEMAS.get(geography, MARKET_SECTOR_SCHEMAS[DEFAULT_GEOGRAPHY])
 
 
 def load_sector_matrix() -> dict:
@@ -85,10 +288,16 @@ def classify_market_regime(behavioral_distribution: dict, event_type: str = "gen
     return regime, round(lead, 3)
 
 
-def compute_sector_impacts(behavioral_distribution: dict, event_type: str, topic: str) -> dict:
+def compute_sector_impacts(
+    behavioral_distribution: dict,
+    event_type: str,
+    topic: str,
+    geography: str = DEFAULT_GEOGRAPHY,
+) -> dict:
     behavioral_distribution = normalize_behavioral_distribution(behavioral_distribution)
     matrix = load_sector_matrix()
     event_sensitivities = matrix.get("event_type_mappings", {}).get(event_type, {})
+    market_schema = _get_market_sector_schema(geography)
 
     dominant = max(behavioral_distribution, key=behavioral_distribution.get)
     dominant_prob = behavioral_distribution[dominant]
@@ -102,8 +311,9 @@ def compute_sector_impacts(behavioral_distribution: dict, event_type: str, topic
     multipliers = behavioral_multipliers.get(dominant, behavioral_multipliers["cautious"])
 
     sector_impacts = {}
-    for sector in INDIA_SECTORS:
-        base = event_sensitivities.get(sector, {"direction": "neutral", "magnitude": 0.15})
+    for sector in market_schema["sectors"]:
+        source_sector = market_schema.get("matrix_aliases", {}).get(sector, sector)
+        base = event_sensitivities.get(source_sector, {"direction": "neutral", "magnitude": 0.15})
         base_direction = base.get("direction", "neutral")
         base_magnitude = float(base.get("magnitude", 0.15))
 
@@ -124,7 +334,7 @@ def compute_sector_impacts(behavioral_distribution: dict, event_type: str, topic
             "reasoning": "",
             "base_sensitivity": round(base_magnitude, 3),
             "behavioral_adjustment": round(multipliers[direction_type], 3),
-            "representative_stocks": SECTOR_REPRESENTATIVE_STOCKS.get(sector, [])[:4],
+            "representative_stocks": market_schema["representative_stocks"].get(sector, [])[:4],
         }
 
     return sector_impacts
@@ -217,9 +427,15 @@ def build_watchlists(sector_impacts: dict) -> dict:
     }
 
 
-def generate_narrative_expectations(topic: str, dominant_outcome: str, market_regime: str) -> dict:
+def generate_narrative_expectations(
+    topic: str,
+    dominant_outcome: str,
+    market_regime: str,
+    geography: str = DEFAULT_GEOGRAPHY,
+) -> dict:
     prompt = (
         f"Event: {topic}\n"
+        f"Market geography: {geography}\n"
         f"Market regime predicted: {market_regime}\n"
         f"Dominant behavioral response: {dominant_outcome}\n\n"
         f"Return JSON with keys retail_narrative, institutional_narrative, media_narrative. "
@@ -239,9 +455,15 @@ def generate_narrative_expectations(topic: str, dominant_outcome: str, market_re
     }
 
 
-def generate_confidence_triggers(topic: str, market_regime: str) -> dict:
+def generate_confidence_triggers(
+    topic: str,
+    market_regime: str,
+    geography: str = DEFAULT_GEOGRAPHY,
+) -> dict:
+    market_schema = _get_market_sector_schema(geography)
     prompt = (
         f"Event: {topic}\n"
+        f"Market geography: {geography}\n"
         f"Predicted market regime: {market_regime}\n\n"
         f"Return JSON with three lists: strengthens, weakens, monitor_signals. "
         f"Each list should contain exactly three short pre-market signals."
@@ -259,11 +481,7 @@ def generate_confidence_triggers(topic: str, market_regime: str) -> dict:
                 "Global cues reverse sharply before the open",
                 "Key management or regulator commentary contradicts the dominant narrative"
             ],
-            "monitor_signals": [
-                "Gift Nifty / SGX Nifty direction",
-                "USD/INR and bond yield movement",
-                "First institutional commentary before the open"
-            ]
+            "monitor_signals": market_schema.get("monitor_signals", [])[:3]
         }
     return {
         "strengthens": result.get("strengthens", []),
@@ -322,13 +540,31 @@ def generate_full_market_impact(
     behavioral_distribution: dict,
     event_type: str,
     topic: str,
-    branch_count: int = 3
+    branch_count: int = 3,
+    geography: str = None,
+    graph_path: str = None,
 ) -> dict:
-    print("\n  Generating market impact analysis...")
+    resolved_geography = resolve_market_geography(
+        geography=geography,
+        graph_path=graph_path,
+        topic=topic,
+        event_type=event_type,
+    )
+    market_schema = _get_market_sector_schema(resolved_geography)
+
+    print(
+        "\n  Generating market impact analysis for "
+        f"{resolved_geography} ({market_schema['description']})..."
+    )
 
     normalized = normalize_behavioral_distribution(behavioral_distribution)
     regime, regime_confidence = classify_market_regime(normalized, event_type)
-    sector_impacts = compute_sector_impacts(normalized, event_type, topic)
+    sector_impacts = compute_sector_impacts(
+        normalized,
+        event_type,
+        topic,
+        geography=resolved_geography,
+    )
 
     reasonings = generate_sector_reasonings(
         sector_impacts=sector_impacts,
@@ -345,14 +581,25 @@ def generate_full_market_impact(
 
     watchlists = build_watchlists(sector_impacts)
     dominant_outcome = max(normalized, key=normalized.get)
-    narratives = generate_narrative_expectations(topic, dominant_outcome, regime)
-    triggers = generate_confidence_triggers(topic, regime)
+    narratives = generate_narrative_expectations(
+        topic,
+        dominant_outcome,
+        regime,
+        geography=resolved_geography,
+    )
+    triggers = generate_confidence_triggers(
+        topic,
+        regime,
+        geography=resolved_geography,
+    )
     volatility_expectation, vix_direction = _estimate_volatility(normalized)
     simulation_confidence = round(max(normalized.values()), 3)
 
     print("  Market impact analysis complete.")
 
     return {
+        "market_geography": resolved_geography,
+        "market_scope_description": market_schema["description"],
         "market_regime": regime,
         "regime_confidence": regime_confidence,
         "sector_impacts": sector_impacts,
@@ -373,5 +620,5 @@ def generate_full_market_impact(
         "branch_count": branch_count,
         "simulation_confidence": simulation_confidence,
         "dominant_outcome": dominant_outcome,
-        "event_type": event_type
+        "event_type": event_type,
     }
