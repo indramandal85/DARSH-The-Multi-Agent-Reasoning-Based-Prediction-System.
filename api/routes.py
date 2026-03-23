@@ -436,7 +436,9 @@ def build_graph():
         jobs[job_id] = {"status": "running", "step": "Building knowledge graph..."}
         try:
             from knowledge.graph_builder import build_knowledge_graph
+            from api.graph_artifact_registry import ensure_graph_registry_entry
             result = build_knowledge_graph(filepath, graph_name)
+            ensure_graph_registry_entry(graph_name)
             jobs[job_id] = {
                 "status"      : "complete",
                 "graph_name"  : graph_name,
@@ -647,6 +649,29 @@ def run_simulation_endpoint():
                 population_model=results.get("population_model"),
             )
 
+            if graph_name:
+                from api.graph_artifact_registry import attach_graph_artifacts
+
+                safe_topic = topic[:40].replace(" ", "_").replace("/", "_")
+                report_path = f"data/reports/report_{safe_topic}.md"
+                attach_graph_artifacts(
+                    graph_name,
+                    report_paths=[report_path],
+                    memory_namespaces=[
+                        branch.get("memory_namespace")
+                        for branch in results.get("branches", [])
+                    ],
+                    simulation_ids=[
+                        branch.get("simulation_id")
+                        for branch in results.get("branches", [])
+                    ],
+                    db_paths=[
+                        branch.get("db_path")
+                        for branch in results.get("branches", [])
+                    ],
+                    topic=topic,
+                )
+
             jobs[job_id] = {"status": "complete",
                            "topic"            : topic,
                            "graph_name"       : graph_name,
@@ -855,15 +880,118 @@ def list_graphs():
     for f in os.listdir(graphs_dir):
         if f.endswith(".json") and "_causal" not in f:
             name = f.replace(".json", "")
+            graph_path = os.path.join(graphs_dir, f)
             has_causal = os.path.exists(
                 os.path.join(graphs_dir, f"{name}_causal.json"))
+            node_count = None
+            edge_count = None
+            try:
+                with open(graph_path) as handle:
+                    graph_data = json.load(handle)
+                node_count = len(graph_data.get("nodes", []))
+                edge_count = len(graph_data.get("edges", []))
+            except Exception:
+                pass
             graphs.append({
                 "name"      : name,
                 "filename"  : f,
-                "has_causal": has_causal
+                "has_causal": has_causal,
+                "node_count": node_count,
+                "edge_count": edge_count,
+                "modified"  : os.path.getmtime(graph_path),
             })
 
+    graphs.sort(key=lambda item: item.get("modified", 0), reverse=True)
     return jsonify({"graphs": graphs})
+
+
+@api_bp.route("/api/graphs/<graph_name>", methods=["DELETE"])
+def delete_graph(graph_name):
+    """Delete one saved knowledge graph and its paired artifacts."""
+    if os.path.basename(graph_name) != graph_name:
+        return jsonify({"error": "invalid graph name"}), 400
+
+    from api.graph_artifact_registry import get_graph_artifact_entry, pop_graph_artifact_entry
+
+    graphs_dir = "data/graphs"
+    graph_path = os.path.join(graphs_dir, f"{graph_name}.json")
+    causal_path = os.path.join(graphs_dir, f"{graph_name}_causal.json")
+
+    if not os.path.exists(graph_path):
+        return jsonify({"error": f"Graph not found: {graph_name}"}), 404
+
+    deleted_files = []
+    deleted_report_files = []
+    deleted_memory_collections = []
+    artifact_entry = get_graph_artifact_entry(graph_name) or {}
+
+    os.remove(graph_path)
+    deleted_files.append(os.path.basename(graph_path))
+
+    if os.path.exists(causal_path):
+        os.remove(causal_path)
+        deleted_files.append(os.path.basename(causal_path))
+
+    report_candidates = list(artifact_entry.get("report_paths", []))
+    if not report_candidates:
+        legacy_safe_topic = graph_name[:40].replace(" ", "_").replace("/", "_")
+        report_candidates.append(f"data/reports/report_{legacy_safe_topic}.md")
+
+    for report_path in report_candidates:
+        normalized = os.path.normpath(report_path)
+        if not normalized.startswith(os.path.normpath("data/reports")):
+            continue
+        if not os.path.exists(normalized):
+            continue
+        if not os.path.basename(normalized).startswith("report_"):
+            continue
+        os.remove(normalized)
+        deleted_report_files.append(os.path.basename(normalized))
+
+    deleted_chroma_collection = False
+    try:
+        import chromadb
+        from chromadb.config import Settings
+
+        collection_name = f"graph_{graph_name}".replace("-", "_").replace(" ", "_")
+        client = chromadb.PersistentClient(
+            path=os.path.join("data", "chroma"),
+            settings=Settings(anonymized_telemetry=False)
+        )
+        client.delete_collection(collection_name)
+        deleted_chroma_collection = True
+    except Exception:
+        deleted_chroma_collection = False
+
+    try:
+        from agents.semantic_memory import create_shared_chroma_client
+
+        client = create_shared_chroma_client()
+        collections = client.list_collections()
+        for namespace in artifact_entry.get("memory_namespaces", []):
+            safe_namespace = namespace.replace("-", "_").replace(" ", "_")
+            prefix = f"mem_{safe_namespace}_"
+            for collection in collections:
+                if collection.name.startswith(prefix):
+                    try:
+                        client.delete_collection(collection.name)
+                        deleted_memory_collections.append(collection.name)
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+    pop_graph_artifact_entry(graph_name)
+
+    return jsonify({
+        "success": True,
+        "graph_name": graph_name,
+        "deleted_files": deleted_files,
+        "deleted_report_files": deleted_report_files,
+        "deleted_memory_collections": deleted_memory_collections,
+        "deleted_chroma_collection": deleted_chroma_collection,
+        "message": f"Deleted saved graph: {graph_name}"
+    })
 
 
 
@@ -1073,7 +1201,9 @@ def merge_graphs_endpoint():
 
     try:
         from knowledge.graph_merger import merge_graphs
+        from api.graph_artifact_registry import ensure_graph_registry_entry
         result = merge_graphs(graph_names, merged_name)
+        ensure_graph_registry_entry(result["merged_name"])
         return jsonify({
             "success"    : True,
             "merged_name": result["merged_name"],

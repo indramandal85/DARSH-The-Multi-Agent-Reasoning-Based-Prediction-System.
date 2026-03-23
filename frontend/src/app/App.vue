@@ -343,8 +343,16 @@
         <p class="screen-sub">Upload a document, fetch live news, load a historical event, or start from a guided market event template.</p>
 
         <div class="mode-tabs">
-          <button v-for="m in modes" :key="m.id" class="mode-tab"
-                  :class="{ active: inputMode === m.id }" @click="switchMode(m.id)">
+          <button
+            v-for="m in modes"
+            :key="m.id"
+            class="mode-tab"
+            :class="{
+              active: inputMode === m.id,
+              'mode-tab-graph-history': m.id === 'graph_history'
+            }"
+            @click="switchMode(m.id)"
+          >
             <span class="tab-icon">{{ m.icon }}</span>{{ m.label }}
           </button>
         </div>
@@ -414,7 +422,68 @@
           <div v-if="fetchMessage" class="status-pill" :class="fetchError ? 'pill-red' : 'pill-green'">{{ fetchMessage }}</div>
         </div>
 
-        <!-- Tab D: Market Event Template -->
+        <!-- Tab D: Graph History -->
+        <div v-if="inputMode === 'graph_history'" class="mode-body">
+          <div class="info-banner info-blue">
+            <strong>Graph history mode.</strong>
+            Reuse a previously built knowledge graph when you want to rerun the same test faster and skip extraction.
+            Loading a saved graph takes you straight to Configure so you can adjust the scenario and continue.
+          </div>
+
+          <div class="saved-graph-actions">
+            <div class="saved-graph-summary">
+              <span class="saved-graph-count">{{ availableGraphs.length }}</span>
+              <span>{{ availableGraphs.length === 1 ? 'saved graph ready to reuse' : 'saved graphs ready to reuse' }}</span>
+            </div>
+            <button class="btn-secondary small" type="button" @click="refreshAvailableGraphs()" :disabled="graphHistoryLoading">
+              {{ graphHistoryLoading ? 'Refreshing...' : 'Refresh List' }}
+            </button>
+          </div>
+
+          <div v-if="graphHistoryMessage" class="status-pill" :class="graphHistoryError ? 'pill-red' : 'pill-green'">
+            {{ graphHistoryMessage }}
+          </div>
+
+          <div v-if="graphHistoryLoading && !availableGraphs.length" class="hist-empty">
+            Loading saved knowledge graphs...
+          </div>
+          <div v-else-if="availableGraphs.length === 0" class="hist-empty">
+            No saved graphs found yet. Build a knowledge graph once and it will appear here for quick reuse.
+          </div>
+          <div v-else class="saved-graph-list">
+            <article v-for="graph in availableGraphs" :key="graph.name" class="saved-graph-card">
+              <div class="saved-graph-card-top">
+                <div>
+                  <div class="saved-graph-name">{{ formatLabel(graph.name) }}</div>
+                  <div class="saved-graph-meta">
+                    <span>{{ graph.filename }}</span>
+                    <span>Updated {{ formatSavedGraphTime(graph.modified) }}</span>
+                  </div>
+                </div>
+                <div class="saved-graph-tags">
+                  <span class="saved-graph-chip">{{ graph.node_count ?? 'n/a' }} nodes</span>
+                  <span class="saved-graph-chip">{{ graph.edge_count ?? 'n/a' }} edges</span>
+                  <span v-if="graph.has_causal" class="saved-graph-chip saved-graph-chip-causal">Causal DAG ready</span>
+                </div>
+              </div>
+              <div class="saved-graph-card-actions">
+                <button class="btn-primary saved-graph-load" type="button" @click="loadSavedGraph(graph)">
+                  Load Graph And Continue →
+                </button>
+                <button
+                  class="saved-graph-delete"
+                  type="button"
+                  :disabled="deletingGraphName === graph.name"
+                  @click="deleteSavedGraph(graph)"
+                >
+                  {{ deletingGraphName === graph.name ? 'Deleting...' : 'Delete' }}
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Tab E: Market Event Template -->
         <div v-if="inputMode === 'template'" class="mode-body">
           <div class="info-banner info-purple">
             <strong>Guided market-event mode.</strong>
@@ -1719,7 +1788,8 @@ const modes = [
   { id: 'upload',     label: 'Manual Upload',      icon: '📄' },
   { id: 'live',       label: 'Live News',           icon: '📡' },
   { id: 'historical', label: 'Historical Backtest', icon: '🔍' },
-  { id: 'template',   label: 'Market Event Template', icon: '📊' }
+  { id: 'template',   label: 'Market Event Template', icon: '📊' },
+  { id: 'graph_history', label: 'Graph History',    icon: '🧠' }
 ]
 const inputMode = ref('upload')
 
@@ -1760,6 +1830,10 @@ const graphError   = ref(false)
 const graphResult  = ref(null)
 const graphJobId   = ref(null)
 const graphName    = ref('')
+const graphHistoryLoading = ref(false)
+const graphHistoryMessage = ref('')
+const graphHistoryError   = ref(false)
+const deletingGraphName   = ref('')
 
 // ── Simulation config ─────────────────────────────────────────────────────────
 const defaultSimulationActions = [
@@ -2718,9 +2792,14 @@ function switchMode(mode) {
   uploadedWordCount.value = 0
   fetchMessage.value = ''
   fetchError.value = false
+  graphName.value = ''
+  graphViewerName.value = ''
   graphMessage.value = ''
   graphError.value = false
   graphResult.value = null
+  deletingGraphName.value = ''
+  graphHistoryMessage.value = ''
+  graphHistoryError.value = false
   actualOutcome.value = ''
   brierResult.value = null
   templateMessage.value = ''
@@ -2728,6 +2807,9 @@ function switchMode(mode) {
 
   if (mode === 'template' && !eventTemplates.value.length) {
     loadEventTemplates()
+  }
+  if (mode === 'graph_history') {
+    void refreshAvailableGraphs(true)
   }
 }
 
@@ -2909,6 +2991,7 @@ async function buildGraph() {
         graphMessage.value = `✓ Graph built — ${d.entity_count} entities, ${d.edge_count} relationships`
         graphResult.value = d
         graphViewerName.value = graphName.value
+        void refreshAvailableGraphs(true)
         if (!config.value.topic && graphName.value)
           config.value.topic = graphName.value.replace(/_/g, ' ')
         setTimeout(() => { currentStep.value = 1 }, 1200)
@@ -3138,7 +3221,9 @@ function resetAll() {
   uploadedFilename.value = ''; uploadedDisplayFilename.value = ''; uploadedSourceFormat.value = ''; uploadedWordCount.value = 0
   liveTopics.value = ''; fetchMessage.value = ''; fetchError.value = false; fetchLoading.value = false
   selectedEventId.value = ''; actualOutcome.value = ''; brierResult.value = null
+  graphName.value = ''; graphViewerName.value = ''
   graphMessage.value = ''; graphError.value = false; graphResult.value = null; isBuilding.value = false
+  graphHistoryLoading.value = false; graphHistoryMessage.value = ''; graphHistoryError.value = false; deletingGraphName.value = ''
   runningStep.value = ''; simResult.value = {}; animateBars.value = false; showReport.value = false
   liveFocus.value = createEmptyLiveFocus()
   finalPageTab.value = 'results'
@@ -3188,11 +3273,30 @@ async function ensureHistoryLoaded() {
 
 async function ensureAvailableGraphs() {
   if (availableGraphs.value.length) return
+  await refreshAvailableGraphs(true)
+}
+
+async function refreshAvailableGraphs(silent = false) {
+  graphHistoryLoading.value = true
+  graphHistoryError.value = false
+  if (!silent) {
+    graphHistoryMessage.value = 'Loading saved knowledge graphs...'
+  }
+
   try {
     const res = await axios.get(`${API}/api/graphs`)
     availableGraphs.value = res.data.graphs || []
-  } catch {
+    if (!silent) {
+      graphHistoryMessage.value = availableGraphs.value.length
+        ? `Loaded ${availableGraphs.value.length} saved knowledge graph${availableGraphs.value.length === 1 ? '' : 's'}.`
+        : 'No saved knowledge graphs found yet.'
+    }
+  } catch (e) {
     availableGraphs.value = []
+    graphHistoryMessage.value = 'Error: ' + (e.response?.data?.error || e.message)
+    graphHistoryError.value = true
+  } finally {
+    graphHistoryLoading.value = false
   }
 }
 
@@ -3264,9 +3368,80 @@ async function mergeSelectedGraphs() {
   try {
     const res = await axios.post(`${API}/api/merge-graphs`, { graph_names: mergeList.value })
     mergeResult.value = res.data
+    await refreshAvailableGraphs(true)
   } catch (e) {
     mergeResult.value = { error: e.response?.data?.error || e.message }
   } finally { merging.value = false }
+}
+
+function loadSavedGraph(graph) {
+  if (!graph?.name) return
+
+  config.value = createDefaultConfig()
+  config.value.topic = formatLabel(graph.name)
+
+  uploadedFilename.value = ''
+  uploadedDisplayFilename.value = ''
+  uploadedSourceFormat.value = ''
+  uploadedWordCount.value = 0
+  fetchMessage.value = ''
+  fetchError.value = false
+  actualOutcome.value = ''
+  brierResult.value = null
+  templateMessage.value = ''
+  templateError.value = false
+
+  graphName.value = graph.name
+  graphViewerName.value = graph.name
+  graphResult.value = (graph.node_count != null || graph.edge_count != null)
+    ? {
+        entity_count: graph.node_count ?? 0,
+        edge_count: graph.edge_count ?? 0,
+      }
+    : null
+  graphMessage.value = `Loaded saved graph: ${formatLabel(graph.name)}`
+  graphError.value = false
+  graphHistoryMessage.value = `Loaded saved graph "${formatLabel(graph.name)}". Review the scenario on the next screen.`
+  graphHistoryError.value = false
+  currentStep.value = 1
+}
+
+async function deleteSavedGraph(graph) {
+  if (!graph?.name || deletingGraphName.value) return
+
+  const label = formatLabel(graph.name)
+  if (typeof window !== 'undefined') {
+    const confirmed = window.confirm(
+      `Delete the saved graph "${label}"? This removes only this graph, its linked report files, its graph Chroma data, and any tracked agent-memory artifacts for runs that used it.`
+    )
+    if (!confirmed) return
+  }
+
+  deletingGraphName.value = graph.name
+  graphHistoryMessage.value = `Deleting saved graph "${label}"...`
+  graphHistoryError.value = false
+
+  try {
+    const res = await axios.delete(`${API}/api/graphs/${encodeURIComponent(graph.name)}`)
+
+    if (graphName.value === graph.name) {
+      graphName.value = ''
+      graphViewerName.value = ''
+      graphResult.value = null
+      graphMessage.value = ''
+    }
+
+    mergeList.value = mergeList.value.filter(name => name !== graph.name)
+    const deletedReports = res.data?.deleted_report_files?.length || 0
+    const deletedMemories = res.data?.deleted_memory_collections?.length || 0
+    graphHistoryMessage.value = `Deleted saved graph "${label}" and cleaned ${deletedReports} report file${deletedReports === 1 ? '' : 's'} plus ${deletedMemories} memory collection${deletedMemories === 1 ? '' : 's'}.`
+    await refreshAvailableGraphs(true)
+  } catch (e) {
+    graphHistoryMessage.value = 'Error: ' + (e.response?.data?.error || e.message)
+    graphHistoryError.value = true
+  } finally {
+    deletingGraphName.value = ''
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -3277,6 +3452,18 @@ function outcomeColor(outcome) {
 
 function formatLabel(value) {
   return (value || '').replaceAll('_', ' ')
+}
+
+function formatSavedGraphTime(value) {
+  const date = new Date(Number(value || 0) * 1000)
+  if (Number.isNaN(date.getTime())) return 'date unavailable'
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 function formatPopulation(value) {
@@ -3448,7 +3635,7 @@ body {
   top: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
@@ -5654,21 +5841,160 @@ body {
 .screen-sub   { color: var(--muted); font-size: 13px; margin-bottom: 28px; line-height: 1.7; }
 
 /* ── Mode tabs ───────────────────────────────────────────────────────────── */
-.mode-tabs { display: flex; gap: 6px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
 
 .mode-tab {
-  display: flex; align-items: center; gap: 6px; padding: 8px 16px;
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px;
   border: 1px solid var(--border); background: transparent; color: var(--muted);
   border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;
-  font-family: inherit; transition: all 0.15s;
+  font-family: inherit; transition: all 0.15s; min-height: 56px;
 }
 
 .mode-tab:hover { color: var(--text); border-color: var(--border2); }
 .mode-tab.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+.mode-tab-graph-history { grid-column: 2 / span 2; max-width: 340px; justify-self: center; width: 100%; }
 
 .tab-icon  { font-size: 13px; }
 .mode-body { padding: 4px 0; }
 .mode-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; }
+
+.saved-graph-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.saved-graph-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.saved-graph-count {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 251, 246, 0.94);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.saved-graph-list {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-graph-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255, 252, 247, 0.92);
+  box-shadow: 0 16px 32px rgba(185, 123, 83, 0.08);
+}
+
+.saved-graph-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.saved-graph-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.saved-graph-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.saved-graph-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-graph-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.saved-graph-chip-causal {
+  color: var(--amber);
+  border-color: rgba(242, 169, 59, 0.24);
+  background: rgba(255, 248, 231, 0.96);
+}
+
+.saved-graph-load {
+  width: auto;
+  align-self: flex-start;
+  padding-inline: 20px;
+}
+
+.saved-graph-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.saved-graph-delete {
+  border: 1px solid rgba(213, 77, 89, 0.24);
+  background: rgba(255, 244, 246, 0.92);
+  color: #c14a57;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.saved-graph-delete:hover:not(:disabled),
+.saved-graph-delete:focus-visible {
+  border-color: rgba(213, 77, 89, 0.42);
+  background: rgba(255, 236, 240, 0.98);
+  transform: translateY(-1px);
+}
+
+.saved-graph-delete:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 
 /* ── Banners ─────────────────────────────────────────────────────────────── */
 .info-banner {
@@ -7344,6 +7670,28 @@ body {
 /* ── Misc ────────────────────────────────────────────────────────────────── */
 code { background: rgba(255, 241, 227, 0.9); padding: 2px 6px; border-radius: 3px; font-family: inherit; font-size: 12px; color: var(--accent); }
 
+@media (max-width: 1040px) {
+  .mode-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mode-tab-graph-history {
+    grid-column: 1 / -1;
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 620px) {
+  .mode-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-tab-graph-history {
+    grid-column: auto;
+    max-width: none;
+  }
+}
+
 @media (max-width: 720px) {
   .ops-screen,
   .studio-screen {
@@ -7415,6 +7763,19 @@ code { background: rgba(255, 241, 227, 0.9); padding: 2px 6px; border-radius: 3p
   .workspace-tabs,
   .tool-card-grid {
     width: 100%;
+  }
+
+  .saved-graph-actions,
+  .saved-graph-card-top,
+  .saved-graph-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saved-graph-load,
+  .saved-graph-delete {
+    width: 100%;
+    align-self: stretch;
   }
 
   .report-overview-chart {

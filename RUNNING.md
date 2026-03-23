@@ -39,12 +39,6 @@ source .venv/bin/activate
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install feedparser==6.0.11    # Live news ingestion
-```
-
-**If NumPy version error appears:**
-```bash
-pip install "numpy==1.26.4"
 ```
 
 ### Step 3 — Install frontend dependencies

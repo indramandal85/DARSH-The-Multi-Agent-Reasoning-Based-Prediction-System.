@@ -340,6 +340,7 @@ def run_simulation(
 
     result_summary = {
         "simulation_id"       : simulation_id,
+        "memory_namespace"    : memory_sim_id,
         "topic"               : topic,
         "num_agents"          : num_agents,
         "num_rounds"          : num_rounds,
