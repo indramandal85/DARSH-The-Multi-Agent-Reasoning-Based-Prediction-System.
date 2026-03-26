@@ -182,7 +182,7 @@
                     </span>
                     LinkedIn
                   </a>
-                  <a class="home-social-pill" href="https://github.com/indramandal85/DARSH-The-Multi-Agent-Reasoning-Based-Prediction-System." target="_blank" rel="noreferrer">
+                  <a class="home-social-pill" href="https://github.com/indramandal85/DARSH" target="_blank" rel="noreferrer">
                     <span class="social-icon" aria-hidden="true">
                       <svg viewBox="0 0 24 24" role="presentation">
                         <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.1.82-.26.82-.58l-.01-2.03c-3.34.73-4.04-1.42-4.04-1.42-.55-1.38-1.33-1.75-1.33-1.75-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.22 1.84 1.22 1.08 1.82 2.82 1.3 3.5.99.11-.77.42-1.3.76-1.6-2.67-.3-5.48-1.32-5.48-5.9 0-1.3.47-2.36 1.23-3.19-.12-.3-.53-1.53.12-3.18 0 0 1-.32 3.3 1.22a11.6 11.6 0 0 1 6 0c2.3-1.54 3.3-1.22 3.3-1.22.65 1.65.24 2.88.12 3.18.76.83 1.23 1.9 1.23 3.19 0 4.6-2.81 5.59-5.49 5.89.43.37.81 1.1.81 2.22l-.01 3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/>
